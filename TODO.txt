@@ -1,0 +1,47 @@
+Things still to be done, ideas for improvement:
+
+- Get the file number from the subject of the email - do not require it to be
+  passed on the command line.  Minimise the amount of work that the mailfilter
+  script needs to do.
+
+- Work out how to sensibly bounce/forward the email if there's a problem.
+
+- Handle emails without a file number.  (Flag them as requiring action and
+  bounce them to an administrator.)
+
+- Handle emails tagged personal.  (Drop them without filing.)
+
+- Do not process emails that already have been tagged with our status?  I'm
+  not sure whether this is a really good idea, since foreign email systems may
+  repeat our headers in replies.  Hopefully not, and simply exiting with an
+  error if the email has already been processed will be viable.
+
+- Save email headers in a file.
+
+- If we had to make up a file name, the extension is probably wrong. Check the
+  mime type of the content and change the extension if required.
+
+- Make the main program a little more modular.
+
+- Move all configuration into one central place.
+
+- Tidy up configuration a little better; work out a way to simplify what's in
+  site.pl.
+
+- Add a database tidying routine to run, say, once per month, which will go
+  through the database and delete entries for files which no longer exist.
+
+- Add a database pre-seeding routing to traverse a filesystem, checksum all of
+  the files, and add them to the database.  It would need to use the file's
+  timestamp as the add to database time - that way older files would be
+  treated as older (not that this is really important).
+
+- Do not save message parts that consist entirely of whitespace.
+
+- Save statistics for emails:
+	senders (domain & user)
+	recipients (domain & user)
+	project numbers
+	size
+	date
+

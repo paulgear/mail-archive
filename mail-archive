@@ -1,0 +1,154 @@
+#!/usr/bin/perl -Tw
+#
+# Script to accept email messages on standard input and file all of their
+# parts in a filing system, deduplicating each of the MIME parts by hard
+# linking to another identical file, if one exists.
+#
+# There should never be any need to run this directly except for debugging.
+# See .mailfilter for normal usage.
+#
+# Copyright (c) 2011 Lowenstein & Stumpo <http://www.lowstump.com.au/>
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Author:	Paul Gear <github@libertysys.com.au>
+#
+
+use strict;
+
+use Email::Address;
+use Email::MIME;
+use File::Spec;
+use File::Temp;
+use Getopt::Long;
+use Scalar::Util qw/tainted/;
+
+use lib ".";
+
+use MailArchive::Archive;
+use MailArchive::Util;
+
+MailArchive::Util->init($0);
+MailArchive::Archive->init;
+
+my $direct = 0;
+my $debug = getdebug();
+my $tmpdir = File::Temp->newdir(CLEANUP => 1);
+our @localdomains;
+
+require "site.pl";
+
+my $result = GetOptions(
+	#"length=i"	=> \$length,    # numeric
+	#"file=s"	=> \$data,      # string
+	"debug"		=> \$debug,	# boolean
+	"direct"	=> \$direct,	# boolean
+);
+
+setdebug($debug);
+
+my $basedir = shift @ARGV;
+my $projnum = shift @ARGV;
+my $projdir;
+
+# check and untaint base directory
+$basedir = File::Spec->canonpath($basedir);
+error "Base directory $basedir not found" unless -d $basedir;
+# if the directory exists, it is untainted
+$basedir =~ /^(.*)$/;
+$basedir = $1;
+error "Base directory $basedir tainted" if tainted($basedir);
+MailArchive::Db->init($basedir);
+
+# validate project number
+$projnum = check_project_num($projnum);
+error "Project number $projnum tainted" if tainted($projnum);
+
+# search for project directory
+$projdir = get_project_dir($basedir, $projnum);
+error "Project directory for $projnum not found" unless defined $projdir;
+error "Project directory $projdir tainted" if tainted($projdir);
+debug "Project directory is $projdir";
+
+debug "tmpdir = $tmpdir";
+
+# read our input email, and save it to temporary file
+my $email;
+{
+	local $/ = undef;
+	$email = <>;
+	my $input = "$tmpdir/orig.eml";
+	save_file($input, "temporary file", $email);
+}
+
+# open parsed version of the email
+my $msg = Email::MIME->new($email);
+
+# work out whether the message is incoming or outgoing
+my $from = $msg->header("From");
+my @fromaddr = Email::Address->parse($from);
+dump_email_address "fromaddr", $fromaddr[0];
+my $fromdom = $fromaddr[0]->host;
+debug "fromdom = $fromdom";
+my $outgoing = grep(/^$fromdom$/, @localdomains);
+debug "outgoing = $outgoing";
+debug "Email is " . ($outgoing ? "outgoing" : "incoming");
+
+# get the incoming/outgoing correspondence directory
+my $emaildir = get_project_email_dir($projdir, $outgoing);
+debug "emaildir = $emaildir";
+
+# get primary recpient
+my $to = $msg->header("To");
+my @toaddr = Email::Address->parse($to);
+dump_email_addresses "toaddr", @toaddr;
+
+# use the other party as an identifier
+my $otherparty;
+if ($outgoing) {
+	$otherparty = join(" ", map {$_->name, $_->address} @toaddr);
+}
+else {
+	$otherparty = $fromaddr[0]->name . " " . $fromaddr[0]->address;
+}
+debug "otherparty = $otherparty";
+
+# get the subject, clearing out some of the noise
+my $subject = $msg->header("Subject");
+debug "subject (pre-clean) = $subject";
+$subject =~ s/((Emailing|FW|Fwd|Re|RE): ?)*//g;	# delete mail client noise
+$subject =~ s/($projnum *)*//g;			# delete references to the project number
+$subject =~ s/[<>*|?:]+//g;			# delete samba reserved characters
+$subject =~ s/\s+/ /g;				# compress whitespace
+$subject =~ s/^\s*//g;				# delete leading whitespace
+$subject =~ s/\s*$//g;				# delete trailing whitespace
+debug "subject = $subject";
+
+# use the date, subject, and otherparty to create a unique directory name within the correspondence directory
+my $yyyymmdd = yyyymmdd();
+my $uniquebase = "$emaildir/$yyyymmdd $otherparty $subject";
+debug "uniquebase = ($uniquebase)";
+
+my $dir = create_seq_directory($uniquebase);
+
+if ($direct) {
+	# just save the file
+	rmdir $dir
+		or warn "Cannot remove temporary directory $dir: $!";
+	#mv $FILE "$UNIQUE".eml
+}
+else {
+	process_message($dir, $msg);
+}
+
