@@ -42,6 +42,7 @@ MailArchive::Util->init($0);
 
 my $split = 1;
 my $debug = getdebug();
+my $magic_header;
 
 # functions which may need customising on local sites
 require "site.pl";
@@ -74,6 +75,13 @@ my $subject = $msg->header("Subject");
 my $from = $msg->header("From");
 my $to = $msg->header("To");
 
+# check if we've already processed this message
+my $magic = $msg->header($magic_header);
+if (defined $magic) {
+	debug "Dropping message, already processed: $magic";
+	exit 0;
+}
+
 # check for any messages to drop
 my $check_drop = get_drop_flags($subject, $from, $to);
 if (defined $check_drop) {
@@ -83,7 +91,10 @@ if (defined $check_drop) {
 
 # validate project number
 $projnum = check_project_num(defined $projnum ? $projnum : $subject);
-error "Project number not found" unless defined $projnum;
+unless (defined $projnum) {
+	# @@@ TODO - insert magic header & send mail to administrator
+}
+
 error "Project number $projnum tainted" if tainted($projnum);
 
 # remove noise from subject

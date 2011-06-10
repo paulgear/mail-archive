@@ -33,6 +33,9 @@ my @searchpath = ( '/', '/files' );
 my @localdomains = ( 'localhost' );
 my $drop_subject_regex = '\b[(\[]PERSONAL[)\]]\b';
 
+# defaults for variables which should not need changing
+$magic_header = "X-MailArchive-Status";
+
 # pull in the site settings
 require "config.pl";
 

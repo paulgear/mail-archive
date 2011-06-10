@@ -1,15 +1,12 @@
 Things still to be done, ideas for improvement:
 
+- Do we need to run first as an xfilter, then as a to?
+
 - Work out how to sensibly bounce/forward the email if there's a problem.
   (Probably solved already.)
 
 - Handle emails without a file number.  (Flag them as requiring action and
   bounce them to an administrator.)
-
-- Do not process emails that already have been tagged with our status?  I'm
-  not sure whether this is a really good idea, since foreign email systems may
-  repeat our headers in replies.  Hopefully not, and simply exiting with an
-  error if the email has already been processed will be viable.
 
 - Save email headers in a file.
 
