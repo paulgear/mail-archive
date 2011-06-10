@@ -1,0 +1,68 @@
+#!/usr/bin/perl
+
+use strict;
+use lib "..";
+use MailArchive::Util;
+
+sub test ($)
+{
+	my $space = is_whitespace($_[0]);
+
+	if ($space) {
+		print "true: $space\n";
+	}
+	else {
+		print "false: $space\n";
+	}
+}
+
+sub test_true ($)
+{
+	is_whitespace($_[0]) or warn "Test failed for $_[0]";
+}
+
+sub test_false ($)
+{
+	is_whitespace($_[0]) and warn "Test failed for $_[0]";
+}
+
+sub test_ascii_false ($$)
+{
+	my ($from, $to) = @_;
+	print "Testing ASCII characters from $from to $to for false\n";
+	for (my $i = $from; $i <= $to; ++$i) {
+		my $test = chr $i . chr $i . chr $i;
+		#printf "%02d ", $i;
+		is_whitespace($test) and warn "Test failed for ASCII $i";
+	}
+}
+
+sub test_ascii_true ($$)
+{
+	my ($from, $to) = @_;
+	print "Testing ASCII characters from $from to $to for true\n";
+	for (my $i = $from; $i <= $to; ++$i) {
+		my $test = chr $i . chr $i . chr $i;
+		#printf "%02d ", $i;
+		is_whitespace($test) or warn "Test failed for ASCII $i";
+	}
+}
+
+print "Testing for true\n";
+test_true(undef);
+test_true("");
+test_true(" 	");
+test_true("\n");
+test_true("\n\r");
+test_true("\cK");
+
+print "Testing for false\n";
+test_false("\x00");
+test_false("hello world");
+test_false("h\b ");
+test_false(" h\b ");
+
+test_ascii_false(0, 8);
+test_ascii_true(9, 13);
+test_ascii_false(14, 31);
+

@@ -24,6 +24,8 @@ Things still to be done, ideas for improvement:
 
 - Need to think about how spam will be handled.
 
+- Create a complete test suite.
+
 - Save statistics for emails:
 	senders (domain & user)
 	recipients (domain & user)
