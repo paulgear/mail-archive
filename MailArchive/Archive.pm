@@ -154,5 +154,5 @@ sub process_message ($$)
 	}
 }
 
-1;
+1;	# file must return true - do not remove this line
 

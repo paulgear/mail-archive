@@ -119,5 +119,5 @@ sub init ($)
 	create_statements();
 }
 
-1;
+1;	# file must return true - do not remove this line
 

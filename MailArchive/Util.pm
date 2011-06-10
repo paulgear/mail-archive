@@ -142,5 +142,5 @@ sub save_file ($$$)
 	#debug "Saved $fname";
 }
 
-1;
+1;	# file must return true - do not remove this line
 

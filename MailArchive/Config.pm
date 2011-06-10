@@ -34,5 +34,5 @@ $VERSION     = 1.00;
 );
 @EXPORT_OK   = qw( );
 
-1;
+1;	# file must return true - do not remove this line
 
