@@ -1,13 +1,56 @@
-This is very sketchy at the moment.  More will be filled in here as the
-project is filled out.
+This is very sketchy at the moment.  More will be added here as the project
+progresses.
+
+
+Goals/Design
+============
 
 Notes on the overall design goals:
 
 - Capture all mail relating to a project.
+
+- Save disk space by saving each message part as a file, checking its SHA-256
+  checksum against records in a database, comparing the files byte-by-byte if
+  a match is found, and hard-linking the files in the filesystem if they are
+  found to be identical.
 
 - Work as an email content mangler so that headers can be added and the
   message delivery can continue in the case of an error.
 
 - Work exactly as the original client intended, but be flexible enough to
   adapt to other filing systems.
+
+
+Installation
+============
+
+- Requires the following perl CPAN modules:
+	DBI
+	Digest
+	Email::Address
+	Email::MIME
+	File::Basename
+	File::Compare
+	File::Copy
+	File::Path
+	File::Spec
+	File::Temp
+	Getopt::Long
+	Scalar::Util
+
+- Assumes use of DBD::mysql DBI module, but other databases may work.  Patches
+  providing compatibility with the database of your choice will be gratefully
+  accepted.  :-)
+
+- To install all the required dependencies on Debian, use the following
+  command:
+	apt-get install \
+		libdbd-mysql-perl \
+		libdbi-perl \
+		libdigest-perl \
+		libemail-address-perl \
+		libemail-mime-perl \
+		libfile-path-perl
+  To install as a normal user on Ubuntu add sudo to the beginning of the above
+  command.
 

@@ -1,10 +1,11 @@
 Things still to be done, ideas for improvement:
 
-- Get the file number from the subject of the email - do not require it to be
-  passed on the command line.  Minimise the amount of work that the mailfilter
-  script needs to do.
-
 - Work out how to sensibly bounce/forward the email if there's a problem.
+  (Probably solved already.)
+
+- Minimise the amount of work that the mailfilter script needs to do:
+    - Get the file number from the subject of the email - do not require it to
+      be passed on the command line.
 
 - Handle emails without a file number.  (Flag them as requiring action and
   bounce them to an administrator.)
@@ -23,11 +24,6 @@ Things still to be done, ideas for improvement:
 
 - Make the main program a little more modular.
 
-- Move all configuration into one central place.
-
-- Tidy up configuration a little better; work out a way to simplify what's in
-  site.pl.
-
 - Add a database tidying routine to run, say, once per month, which will go
   through the database and delete entries for files which no longer exist.
 
@@ -44,4 +40,10 @@ Things still to be done, ideas for improvement:
 	project numbers
 	size
 	date
+
+- Change debug/error to warn/die and provide signal handlers that reformat.
+  Or just switch to log4perl.
+
+- Optional feature to link all correspondence into a single directory with no
+  duplication of files if an identical copy is already there.
 

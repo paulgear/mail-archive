@@ -1,0 +1,17 @@
+# mailfilter file for mail-archive
+
+DOMAIN="my.domain"			# email domain of administrator
+ADMIN="mail-archive-admin@$DOMAIN"	# administrator of project emails for site
+DIR="/my/project/directory"		# the base dir in which to save project files
+
+logfile $HOME/mailfilter.log
+
+# Send message to the mail-archive process
+log "Attempting mail-archive"
+to "| $HOME/mail-archive $DIR"
+
+# If we're still processing the mail, mail-archive has failed:
+# send it on to the administrator
+log "mail-archive FAILED"
+to "! $ADMIN"
+

@@ -121,8 +121,10 @@ sub save_part ($$$)
 
 sub process_message ($$)
 {
-	my $dir = shift;
+	my $uniquebase = shift;
 	my $msg = shift;
+
+	my $dir = create_seq_directory($uniquebase);
 
 	#debug "dir = $dir";
 	#debug "msg = $msg";

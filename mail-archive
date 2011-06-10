@@ -29,6 +29,7 @@ use strict;
 
 use Email::Address;
 use Email::MIME;
+use File::Copy;
 use File::Spec;
 use File::Temp;
 use Getopt::Long;
@@ -37,23 +38,26 @@ use Scalar::Util qw/tainted/;
 use lib ".";
 
 use MailArchive::Archive;
+use MailArchive::Email;
 use MailArchive::Util;
 
 MailArchive::Util->init($0);
 MailArchive::Archive->init;
 
-my $direct = 0;
+my $split = 1;
 my $debug = getdebug();
 my $tmpdir = File::Temp->newdir(CLEANUP => 1);
 our @localdomains;
 
+# functions which may need customising on local sites
 require "site.pl";
 
 my $result = GetOptions(
 	#"length=i"	=> \$length,    # numeric
 	#"file=s"	=> \$data,      # string
 	"debug"		=> \$debug,	# boolean
-	"direct"	=> \$direct,	# boolean
+	"split"		=> \$split,	# split the email into MIME parts -
+					# if false, just save the whole file
 );
 
 setdebug($debug);
@@ -69,6 +73,8 @@ error "Base directory $basedir not found" unless -d $basedir;
 $basedir =~ /^(.*)$/;
 $basedir = $1;
 error "Base directory $basedir tainted" if tainted($basedir);
+
+# open database
 MailArchive::Db->init($basedir);
 
 # validate project number
@@ -83,13 +89,11 @@ debug "Project directory is $projdir";
 
 debug "tmpdir = $tmpdir";
 
-# read our input email, and save it to temporary file
+# read our input email
 my $email;
 {
 	local $/ = undef;
 	$email = <>;
-	my $input = "$tmpdir/orig.eml";
-	save_file($input, "temporary file", $email);
 }
 
 # open parsed version of the email
@@ -125,30 +129,19 @@ else {
 debug "otherparty = $otherparty";
 
 # get the subject, clearing out some of the noise
-my $subject = $msg->header("Subject");
-debug "subject (pre-clean) = $subject";
-$subject =~ s/((Emailing|FW|Fwd|Re|RE): ?)*//g;	# delete mail client noise
-$subject =~ s/($projnum *)*//g;			# delete references to the project number
-$subject =~ s/[<>*|?:]+//g;			# delete samba reserved characters
-$subject =~ s/\s+/ /g;				# compress whitespace
-$subject =~ s/^\s*//g;				# delete leading whitespace
-$subject =~ s/\s*$//g;				# delete trailing whitespace
-debug "subject = $subject";
+my $subject = clean_subject($msg->header("Subject"), $projnum);
 
 # use the date, subject, and otherparty to create a unique directory name within the correspondence directory
 my $yyyymmdd = yyyymmdd();
 my $uniquebase = "$emaildir/$yyyymmdd $otherparty $subject";
 debug "uniquebase = ($uniquebase)";
 
-my $dir = create_seq_directory($uniquebase);
-
-if ($direct) {
-	# just save the file
-	rmdir $dir
-		or warn "Cannot remove temporary directory $dir: $!";
-	#mv $FILE "$UNIQUE".eml
+if ($split) {
+	# split into parts and process the message
+	process_message($uniquebase, $msg);
 }
 else {
-	process_message($dir, $msg);
+	# save the whole file
+	save_file(get_unique_filename($uniquebase), "email archive file", $email);
 }
 

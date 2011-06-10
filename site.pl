@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# perl fragment to keep configuration for mail-archive
+# perl fragment to manage configuration for mail-archive
 #
 # Copyright (c) 2011 Lowenstein & Stumpo <http://www.lowstump.com.au/>
 #
@@ -22,23 +22,39 @@
 
 use File::Path qw/make_path/;
 
+use lib ".";
+
+use MailArchive::Util;
+
+# regular expression to match project numbers - must contain () to provide $1
+my $projnum_regex = '\b(FN\d{6})\b';
+
+# regular expression to split project number into parts
+my $projnum_split_regex = '^FN(\d\d)(\d\d)(\d\d)$';
+
+# directories in which to search for folders matching project number -
+# relative to the base directory specified on the mail-archive command line.
+my @searchpath = ( '/', '/files' );
+
 # mail from one of these domains is considered outgoing
-@localdomains = (
-	'localhost',
-);
+my @localdomains = ( 'localhost' );
+
+# pull in the site settings
+require "config.pl";
+
 
 # check that this is a valid project number
 sub check_project_num ($)
 {
 	my $projnum = shift;
-	my @match = $projnum =~ /\b(FN\d{6})\b/;
+	my @match = $projnum =~ /$projnum_regex/;
 	return ($#match == 0 ? $match[0] : undef);
 }
 
 # get the two-, four-, and six-digit versions of the file number
 sub split_projnum ($)
 {
-	my @list = ($_[0] =~ /^FN(\d\d)(\d\d)(\d\d)$/);
+	my @list = ($_[0] =~ /$projnum_split_regex/);
 	if ($#list == 2) {
 		return ($list[0], "$list[0]$list[1]", join("", @list));
 	}
@@ -47,25 +63,30 @@ sub split_projnum ($)
 	}
 }
 
-# find a directory for this project in the common places
+# find a directory for this project
 sub get_project_dir ($$)
 {
 	my ($basedir, $projnum) = @_;
 	my ($nn, $nnnn, $nnnnnn) = split_projnum($projnum);
 
-	my @searchpath = (
-		"$basedir/${nn}00-${nn}99",
-		"$basedir/$nn",
-		"$basedir",
+	my @subdirs = (
+		"${nn}00-${nn}99",
+		"$nn",
+		"",
 	);
 
-	for my $path (@searchpath) {
-		#print "checking $path\n";
-		for my $fnum ($projnum, $nnnnnn, $nnnn) {
-			my @dirs = glob "$path/${fnum}*";
-			if ($#dirs >= 0 && -d $dirs[0]) {
-				$dirs[0] =~ /^(.*)$/;
-				return $1;			# return untainted value
+	# We put the search path and subdirectories inside the number search
+	# so that the most exact matches get priority.
+	for my $num ($projnum, $nnnnnn, $nnnn) {
+		for my $path (@searchpath) {
+			$path =~ s/\/*$//;			# remove any trailing /
+			for my $subdir (@subdirs) {
+				my @dirs = glob "$path/$subdir/${num}*";
+				debug "dirs = @dirs";
+				if ($#dirs >= 0 && -d $dirs[0]) {
+					$dirs[0] =~ /^(.*)$/;
+					return $1;		# return untainted value
+				}
 			}
 		}
 	}
@@ -83,5 +104,5 @@ sub get_project_email_dir ($$)
 	return undef;
 }
 
-1; # don't delete this
+1;	# file must return true - do not remove this line
 

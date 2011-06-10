@@ -33,8 +33,6 @@ $VERSION     = 1.00;
 
 	create_seq_directory
 	debug
-	dump_email_address
-	dump_email_addresses
 	error
 	getdebug
 	save_file
@@ -43,7 +41,7 @@ $VERSION     = 1.00;
 
 );
 @EXPORT_OK   = qw(init);
-#%EXPORT_TAGS = ( DEFAULT => [qw(&dump_email_address)] );
+#%EXPORT_TAGS = ( DEFAULT => [qw(&mysub)] );
 
 # code dependencies
 use File::Path;
@@ -83,25 +81,6 @@ sub error ($)
 	exit 1;
 }
 
-sub dump_email_address ($$)
-{
-	my ($label, $address) = @_;
-	my @attrs = map { $address->$_ } qw(name user host);
-	printf STDERR "%s: %s <%s@%s>\n", $label, @attrs;
-	#my @attrs = qw(phrase address comment original host user format name);
-	#for my $attr (@attrs) {
-	#	printf STDERR "\t%-20s  %s\n", $attr, $address->$attr;
-	#}
-}
-
-sub dump_email_addresses ($@)
-{
-	my $label = shift;
-	for my $email (@_) {
-		dump_email_address $label, $email;
-	}
-}
-
 # get current date in yyyymmdd format
 sub yyyymmdd
 {
@@ -112,34 +91,53 @@ sub yyyymmdd
 	return $yyyymmdd;
 }
 
-# create a directory given a base name and working out a valid sequence number
-sub create_seq_directory
+# Given a base and a maximum sequence number (default 999),
+# find the first unused name in the sequence.
+sub check_seq_file_or_dir
 {
 	my $base = shift;
 	my $seq = shift;
 	$seq = 999 unless defined $seq;
 	for (my $i = 1; $i <= $seq; ++$i) {
-		my $dir = "$base $i";
-		debug "Trying $dir";
-		next if -d $dir;
-		next if -e "$dir.eml";
-		debug "$dir does not exist yet, creating";
-		mkpath $dir;
-		debug "made $dir";
-		return $dir;
+		my $num = sprintf "%04d", $i;
+		my $f = "$base $num";
+		debug "Trying $f";
+		next if -d $f;
+		next if -e "$f.eml";
+		return $f;
 	}
 	return undef;
 }
 
+# create a directory given a base name and working out a valid sequence number
+sub create_seq_directory
+{
+	my $dir = check_seq_file_or_dir(@_);
+	if (defined $dir) {
+		debug "$dir does not exist yet, creating";
+		mkpath $dir
+			or error "Cannot create directory $dir: $!";
+		debug "made $dir";
+	}
+	return $dir;
+}
+
+# find a uniueq filename given a base name and working out a valid sequence number
+sub get_unique_filename
+{
+	my $file = check_seq_file_or_dir(@_);
+	return (defined $file ? "$file.eml" : undef);
+}
+
+# save the given content to the file
 sub save_file ($$$)
 {
 	my ($fname, $msg, $content) = @_;
 	open(my $fh, ">$fname")
-		or error "Cannot open $msg: $!";
+		or error "Cannot create file $fname: $!";
 	print $fh $content;
 	close $fh
-		or error "Cannot close $msg: $!";
-	#debug "Saved $fname";
+		or error "Cannot close $fname: $!";
 }
 
 1;	# file must return true - do not remove this line
