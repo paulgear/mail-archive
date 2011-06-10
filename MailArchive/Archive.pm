@@ -115,6 +115,11 @@ sub dedup_file ($$)
 sub save_part ($$$)
 {
 	my ($dir, $filename, $body) = @_;
+	if (is_whitespace($body)) {
+		# don't save empty parts
+		debug "Message part $filename empty - dropping";
+		return;
+	}
 	my $fullpath = File::Spec->catfile($dir, $filename);
 	error "File $fullpath already exists" if -e $fullpath;
 	save_file($fullpath, "message part file", $body);
@@ -143,8 +148,7 @@ sub process_message ($$)
 		debug "part $partnum: $type";
 		my $filename = (defined $part->filename) ? $part->filename : $part->invent_filename($type);
 		debug "part $partnum name: $filename";
-		save_part($dir, $filename, $part->body) unless $type =~ /^multipart\//;
-		if (scalar $part->subparts > 1) {
+		if (scalar $part->subparts > 0) {
 			my $subpartnum = 1;
 			for my $subpart ($part->subparts) {
 				my $subtype = $subpart->content_type;
@@ -153,6 +157,9 @@ sub process_message ($$)
 				debug "part $partnum subpart $subpartnum name: $subfilename";
 				save_part($dir, $subfilename, $subpart->body);
 			}
+		}
+		else {
+			save_part($dir, $filename, $part->body);
 		}
 		++$partnum;
 	}

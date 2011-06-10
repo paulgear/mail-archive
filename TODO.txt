@@ -11,7 +11,8 @@ Things still to be done, ideas for improvement:
 - Save email headers in a file.
 
 - If we had to make up a file name, the extension is probably wrong. Check the
-  mime type of the content and change the extension if required.
+  mime type of the content and change the extension if required.  Useful perl
+  modules might be File::Mimeinfo::Magic and MIME::Types.
 
 - Add a database tidying routine to run, say, once per month, which will go
   through the database and delete entries for files which no longer exist.
@@ -22,8 +23,6 @@ Things still to be done, ideas for improvement:
   treated as older (not that this is really important).
 
 - Need to think about how spam will be handled.
-
-- Do not save message parts that consist entirely of whitespace.
 
 - Save statistics for emails:
 	senders (domain & user)

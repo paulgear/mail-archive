@@ -35,6 +35,7 @@ $VERSION     = 1.00;
 	debug
 	error
 	getdebug
+	is_whitespace
 	read_stdin
 	save_file
 	setdebug
@@ -49,6 +50,7 @@ $VERSION     = 1.00;
 use File::Basename;
 use File::Path;
 use File::Spec;
+use Scalar::Util qw/tainted/;
 
 my $PROG = "";
 my $DEBUG;
@@ -88,7 +90,8 @@ sub error ($)
 sub yyyymmdd
 {
 	my $time = shift;
-	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(defined $time ? $time : time());
+	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
+		localtime(defined $time ? $time : time());
 	$year += 1900;
 	my $yyyymmdd = sprintf("%04d%02d%02d", $year, $mon, $mday);
 	return $yyyymmdd;
@@ -101,6 +104,7 @@ sub check_seq_file_or_dir
 	my $base = shift;
 	my $seq = shift;
 	$seq = 999 unless defined $seq;
+	#debug "base = $base, seq = $seq";
 	for (my $i = 1; $i <= $seq; ++$i) {
 		my $num = sprintf "%04d", $i;
 		my $f = "$base $num";
@@ -130,6 +134,13 @@ sub get_unique_filename
 {
 	my $file = check_seq_file_or_dir(@_);
 	return (defined $file ? "$file.eml" : undef);
+}
+
+# check whether the given string consists entirely of vertical or horizontal whitespace
+sub is_whitespace ($)
+{
+	return 1 unless defined $_[0];
+	return $_[0] =~ /^([[:space:]]|\R)*$/s;
 }
 
 # read all of standard input into a single scalar and return it

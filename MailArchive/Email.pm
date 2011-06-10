@@ -52,6 +52,7 @@ sub clean_subject ($$)
 	$subject =~ s/^\s*//g;				# delete leading whitespace
 	$subject =~ s/\s*$//g;				# delete trailing whitespace
 	debug "subject = $subject";
+	return $subject;
 }
 
 sub dump_email_address ($$)
