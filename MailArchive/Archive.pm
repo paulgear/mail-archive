@@ -88,7 +88,7 @@ sub dedup_file ($$)
 		next unless compare($check_file, $fullpath) == 0;
 
 		# move the file aside
-		#debug "Rename $fullpath -> $fullpath.tmp";
+		#debug "rename $fullpath -> $fullpath.tmp";
 		rename($fullpath, "$fullpath.tmp")
 			or error "Cannot move aside $fullpath";
 
@@ -103,7 +103,7 @@ sub dedup_file ($$)
 		}
 		else {
 			warn "Cannot link $fullpath to $check_file";
-			#debug "Rename $fullpath -> $fullpath.tmp";
+			#debug "rename $fullpath.tmp -> $fullpath";
 			rename("$fullpath.tmp", $fullpath)
 				or warn "Cannot move back $fullpath - please rename manually";
 		}
@@ -133,13 +133,9 @@ sub process_message ($$)
 
 	my $dir = create_seq_directory($uniquebase);
 
-	#debug "dir = $dir";
-	#debug "msg = $msg";
-
 	# TODO: Add processing of stats here
 
 	my $numparts = $msg->parts;
-	#debug "msg has $numparts parts";
 	debug $msg->debug_structure;
 
 	my $partnum = 1;

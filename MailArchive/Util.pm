@@ -104,7 +104,6 @@ sub check_seq_file_or_dir
 	my $base = shift;
 	my $seq = shift;
 	$seq = 999 unless defined $seq;
-	#debug "base = $base, seq = $seq";
 	for (my $i = 1; $i <= $seq; ++$i) {
 		my $num = sprintf "%04d", $i;
 		my $f = "$base $num";

@@ -64,7 +64,7 @@ sub check_file ($$)
 	init() unless defined $select;
 
 	my ($file, $checksum) = @_;
-	#debug "check $file, $checksum";
+	#debug "checking $file, $checksum";
 	$select->execute($checksum)
 		or error "Cannot execute select statement: " . $dbh->errstr;
 	my @results;

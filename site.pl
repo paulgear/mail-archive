@@ -78,9 +78,7 @@ sub get_project_dir ($$)
 		for my $path (@searchpath) {
 			$path =~ s/\/*$//;			# remove any trailing /
 			for my $subdir (@subdirs) {
-				#debug "num = $num, path = $path, subdir = $subdir";
 				my @dirs = glob "$basedir/$path/$subdir/${num}*";
-				#debug "dirs = @dirs";
 				if ($#dirs >= 0 && -d $dirs[0]) {
 					$dirs[0] =~ /^(.*)$/;
 					return $1;		# return untainted value
