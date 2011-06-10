@@ -29,9 +29,6 @@ use strict;
 
 use Email::Address;
 use Email::MIME;
-use File::Copy;
-use File::Spec;
-use File::Temp;
 use Getopt::Long;
 use Scalar::Util qw/tainted/;
 
@@ -42,12 +39,9 @@ use MailArchive::Email;
 use MailArchive::Util;
 
 MailArchive::Util->init($0);
-MailArchive::Archive->init;
 
 my $split = 1;
 my $debug = getdebug();
-my $tmpdir = File::Temp->newdir(CLEANUP => 1);
-our @localdomains;
 
 # functions which may need customising on local sites
 require "site.pl";
@@ -67,19 +61,24 @@ my $projnum = shift @ARGV;
 my $projdir;
 
 # check and untaint base directory
-$basedir = File::Spec->canonpath($basedir);
-error "Base directory $basedir not found" unless -d $basedir;
-# if the directory exists, it is untainted
-$basedir =~ /^(.*)$/;
-$basedir = $1;
-error "Base directory $basedir tainted" if tainted($basedir);
+$basedir = validate_directory($basedir);
 
-# open database
-MailArchive::Db->init($basedir);
+# read our input email
+my $email = read_stdin();
+
+# open parsed version of the email
+my $msg = Email::MIME->new($email);
+
+# get the subject
+my $subject = $msg->header("Subject");
 
 # validate project number
-$projnum = check_project_num($projnum);
+$projnum = check_project_num(defined $projnum ? $projnum : $subject);
+error "Project number not found" unless defined $projnum;
 error "Project number $projnum tainted" if tainted($projnum);
+
+# remove noise from subject
+$subject = clean_subject($subject, $projnum);
 
 # search for project directory
 $projdir = get_project_dir($basedir, $projnum);
@@ -87,31 +86,11 @@ error "Project directory for $projnum not found" unless defined $projdir;
 error "Project directory $projdir tainted" if tainted($projdir);
 debug "Project directory is $projdir";
 
-debug "tmpdir = $tmpdir";
-
-# read our input email
-my $email;
-{
-	local $/ = undef;
-	$email = <>;
-}
-
-# open parsed version of the email
-my $msg = Email::MIME->new($email);
-
 # work out whether the message is incoming or outgoing
 my $from = $msg->header("From");
 my @fromaddr = Email::Address->parse($from);
 dump_email_address "fromaddr", $fromaddr[0];
-my $fromdom = $fromaddr[0]->host;
-debug "fromdom = $fromdom";
-my $outgoing = grep(/^$fromdom$/, @localdomains);
-debug "outgoing = $outgoing";
-debug "Email is " . ($outgoing ? "outgoing" : "incoming");
-
-# get the incoming/outgoing correspondence directory
-my $emaildir = get_project_email_dir($projdir, $outgoing);
-debug "emaildir = $emaildir";
+my $outgoing = is_outgoing(@fromaddr);
 
 # get primary recpient
 my $to = $msg->header("To");
@@ -128,8 +107,9 @@ else {
 }
 debug "otherparty = $otherparty";
 
-# get the subject, clearing out some of the noise
-my $subject = clean_subject($msg->header("Subject"), $projnum);
+# get the incoming/outgoing correspondence directory
+my $emaildir = get_project_email_dir($projdir, $outgoing);
+debug "emaildir = $emaildir";
 
 # use the date, subject, and otherparty to create a unique directory name within the correspondence directory
 my $yyyymmdd = yyyymmdd();

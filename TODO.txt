@@ -3,10 +3,6 @@ Things still to be done, ideas for improvement:
 - Work out how to sensibly bounce/forward the email if there's a problem.
   (Probably solved already.)
 
-- Minimise the amount of work that the mailfilter script needs to do:
-    - Get the file number from the subject of the email - do not require it to
-      be passed on the command line.
-
 - Handle emails without a file number.  (Flag them as requiring action and
   bounce them to an administrator.)
 
@@ -21,8 +17,6 @@ Things still to be done, ideas for improvement:
 
 - If we had to make up a file name, the extension is probably wrong. Check the
   mime type of the content and change the extension if required.
-
-- Make the main program a little more modular.
 
 - Add a database tidying routine to run, say, once per month, which will go
   through the database and delete entries for files which no longer exist.

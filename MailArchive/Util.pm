@@ -35,8 +35,10 @@ $VERSION     = 1.00;
 	debug
 	error
 	getdebug
+	read_stdin
 	save_file
 	setdebug
+	validate_directory
 	yyyymmdd
 
 );
@@ -44,8 +46,9 @@ $VERSION     = 1.00;
 #%EXPORT_TAGS = ( DEFAULT => [qw(&mysub)] );
 
 # code dependencies
-use File::Path;
 use File::Basename;
+use File::Path;
+use File::Spec;
 
 my $PROG = "";
 my $DEBUG;
@@ -129,6 +132,14 @@ sub get_unique_filename
 	return (defined $file ? "$file.eml" : undef);
 }
 
+# read all of standard input into a single scalar and return it
+sub read_stdin ()
+{
+	local $/ = undef;
+	my $stdin = <>;
+	return $stdin;
+}
+
 # save the given content to the file
 sub save_file ($$$)
 {
@@ -138,6 +149,18 @@ sub save_file ($$$)
 	print $fh $content;
 	close $fh
 		or error "Cannot close $fname: $!";
+}
+
+# ensure directory is a canonical path and it exists, returning the untainted name
+sub validate_directory ($)
+{
+	my $dir = shift;
+	$dir = File::Spec->canonpath($dir);
+	error "Base directory $dir not found" unless -d $dir;
+	$dir =~ /^(.*)$/;
+	$dir = $1;
+	error "Base directory $dir tainted" if tainted($dir);
+	return $dir;
 }
 
 1;	# file must return true - do not remove this line

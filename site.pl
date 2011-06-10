@@ -104,5 +104,17 @@ sub get_project_email_dir ($$)
 	return undef;
 }
 
+# determine whether the email is outgoing by checking it against localdomains
+sub is_outgoing ($)
+{
+	my @fromaddr = @_;
+	my $fromdom = $fromaddr[0]->host;
+	debug "fromdom = $fromdom";
+	my $outgoing = grep(/^$fromdom$/, @localdomains);
+	debug "outgoing = $outgoing";
+	debug "Email is " . ($outgoing ? "outgoing" : "incoming");
+	return $outgoing;
+}
+
 1;	# file must return true - do not remove this line
 

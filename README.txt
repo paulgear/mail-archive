@@ -31,10 +31,8 @@ Installation
 	Email::MIME
 	File::Basename
 	File::Compare
-	File::Copy
 	File::Path
 	File::Spec
-	File::Temp
 	Getopt::Long
 	Scalar::Util
 
