@@ -104,16 +104,27 @@ sub get_project_email_dir ($$)
 	return undef;
 }
 
-# determine whether the email is outgoing by checking it against localdomains
+# determine whether the email is outgoing by checking whether the domain of
+# the sender occurs in @localdomains
 sub is_outgoing ($)
 {
 	my @fromaddr = @_;
 	my $fromdom = $fromaddr[0]->host;
 	debug "fromdom = $fromdom";
-	my $outgoing = grep(/^$fromdom$/, @localdomains);
+	my $outgoing = grep {$_ eq $fromdom} @localdomains;
 	debug "outgoing = $outgoing";
 	debug "Email is " . ($outgoing ? "outgoing" : "incoming");
 	return $outgoing;
+}
+
+# return non-null textual description if the email should be dropped without archiving
+sub get_drop_flags ($$$)
+{
+	my ($subject, $from, $to) = @_;
+	if ($subject =~ /[(\[]PERSONAL[)\]]/i) {
+		return "Personal email";
+	}
+	return undef;
 }
 
 1;	# file must return true - do not remove this line

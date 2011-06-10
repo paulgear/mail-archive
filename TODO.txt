@@ -6,8 +6,6 @@ Things still to be done, ideas for improvement:
 - Handle emails without a file number.  (Flag them as requiring action and
   bounce them to an administrator.)
 
-- Handle emails tagged personal.  (Drop them without filing.)
-
 - Do not process emails that already have been tagged with our status?  I'm
   not sure whether this is a really good idea, since foreign email systems may
   repeat our headers in replies.  Hopefully not, and simply exiting with an
@@ -25,6 +23,8 @@ Things still to be done, ideas for improvement:
   the files, and add them to the database.  It would need to use the file's
   timestamp as the add to database time - that way older files would be
   treated as older (not that this is really important).
+
+- Need to think about how spam will be handled.
 
 - Do not save message parts that consist entirely of whitespace.
 

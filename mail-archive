@@ -69,8 +69,17 @@ my $email = read_stdin();
 # open parsed version of the email
 my $msg = Email::MIME->new($email);
 
-# get the subject
+# get the message headers
 my $subject = $msg->header("Subject");
+my $from = $msg->header("From");
+my $to = $msg->header("To");
+
+# check for any messages to drop
+my $check_drop = get_drop_flags($subject, $from, $to);
+if (defined $check_drop) {
+	debug "Dropping email: $check_drop";
+	exit 0;
+}
 
 # validate project number
 $projnum = check_project_num(defined $projnum ? $projnum : $subject);
@@ -87,13 +96,11 @@ error "Project directory $projdir tainted" if tainted($projdir);
 debug "Project directory is $projdir";
 
 # work out whether the message is incoming or outgoing
-my $from = $msg->header("From");
 my @fromaddr = Email::Address->parse($from);
 dump_email_address "fromaddr", $fromaddr[0];
 my $outgoing = is_outgoing(@fromaddr);
 
 # get primary recpient
-my $to = $msg->header("To");
 my @toaddr = Email::Address->parse($to);
 dump_email_addresses "toaddr", @toaddr;
 
