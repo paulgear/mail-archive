@@ -26,7 +26,7 @@ package MailArchive::Archive;
 use strict;
 use warnings;
 use Exporter;
-use vars qw($VERSION @ISA @EXPORT @EXPORT_OK); # %EXPORT_TAGS);
+use vars qw($VERSION @ISA @EXPORT); # @EXPORT_OK); %EXPORT_TAGS);
 $VERSION     = 1.00;
 @ISA         = qw(Exporter);
 @EXPORT      = qw(
@@ -34,7 +34,7 @@ $VERSION     = 1.00;
 	process_message
 
 );
-@EXPORT_OK   = qw( init );
+#@EXPORT_OK   = qw( init );
 
 # code dependencies
 use Digest;
@@ -65,6 +65,8 @@ sub link_file ($$)
 # checksum file, find out whether it matches another file in the database
 sub dedup_file ($$)
 {
+	init() unless $digest;
+
 	my ($fullpath, $data) = @_;
 	$digest->add($data);
 	my $cksum = $digest->hexdigest;

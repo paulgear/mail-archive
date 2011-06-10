@@ -26,7 +26,7 @@ package MailArchive::Db;
 use strict;
 use warnings;
 use Exporter;
-use vars qw($VERSION @ISA @EXPORT @EXPORT_OK); # %EXPORT_TAGS);
+use vars qw($VERSION @ISA @EXPORT); # @EXPORT_OK); # %EXPORT_TAGS);
 $VERSION     = 1.00;
 @ISA         = qw(Exporter);
 @EXPORT      = qw(
@@ -35,7 +35,7 @@ $VERSION     = 1.00;
 	add_file
 
 );
-@EXPORT_OK   = qw( init );
+#@EXPORT_OK   = qw( init );
 
 # code dependencies
 use DBI;
@@ -47,6 +47,8 @@ my $dbh;
 
 sub add_file ($$)
 {
+	init() unless defined $insert;
+
 	my ($file, $checksum) = @_;
 	debug "insert $file, $checksum";
 	$insert->execute($file, $checksum)
@@ -59,6 +61,8 @@ sub add_file ($$)
 
 sub check_file ($$)
 {
+	init() unless defined $select;
+
 	my ($file, $checksum) = @_;
 	#debug "check $file, $checksum";
 	$select->execute($checksum)
@@ -111,7 +115,7 @@ sub create_statements ()
 		or error "Cannot create insert statement: " . $dbh->errstr;
 }
 
-sub init ($)
+sub init ()
 {
 	#my $basedir = shift;
 	open_db();
