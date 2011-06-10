@@ -26,18 +26,12 @@ use lib ".";
 
 use MailArchive::Util;
 
-# regular expression to match project numbers - must contain () to provide $1
+# defaults for configurable variables - see config.pl for description
 my $projnum_regex = '\b(FN\d{6})\b';
-
-# regular expression to split project number into parts
 my $projnum_split_regex = '^FN(\d\d)(\d\d)(\d\d)$';
-
-# directories in which to search for folders matching project number -
-# relative to the base directory specified on the mail-archive command line.
 my @searchpath = ( '/', '/files' );
-
-# mail from one of these domains is considered outgoing
 my @localdomains = ( 'localhost' );
+my $drop_subject_regex = '\b[(\[]PERSONAL[)\]]\b';
 
 # pull in the site settings
 require "config.pl";
@@ -121,7 +115,7 @@ sub is_outgoing ($)
 sub get_drop_flags ($$$)
 {
 	my ($subject, $from, $to) = @_;
-	if ($subject =~ /[(\[]PERSONAL[)\]]/i) {
+	if ($subject =~ /$drop_subject_regex/i) {
 		return "Personal email";
 	}
 	return undef;

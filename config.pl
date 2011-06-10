@@ -16,5 +16,8 @@ $projnum_split_regex = '^FN(\d\d)(\d\d)(\d\d)$';
 # relative to the base directory specified on the mail-archive command line.
 @searchpath = ( '/', '/files' );
 
+# regular expression to match subjects which should cause the email to be dropped
+$drop_subject_regex = '\b[(\[]PERSONAL[)\]]\b';
+
 1;	# file must return true - do not remove this line
 
