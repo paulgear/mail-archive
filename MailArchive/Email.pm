@@ -32,6 +32,7 @@ $VERSION     = 1.00;
 @EXPORT      = qw(
 
 	clean_subject
+	concatenate_headers
 	dump_email_address
 	dump_email_addresses
 
@@ -53,6 +54,18 @@ sub clean_subject ($$)
 	$subject =~ s/\s*$//g;				# delete trailing whitespace
 	debug "subject = $subject";
 	return $subject;
+}
+
+# concatenate headers in an array into a single string
+sub concatenate_headers (@)
+{
+	my $header = "";
+	while ($#_ > -1) {
+		$header = $header . "$_[0]: $_[1]\n";
+		shift;
+		shift;
+	}
+	return $header;
 }
 
 sub dump_email_address ($$)

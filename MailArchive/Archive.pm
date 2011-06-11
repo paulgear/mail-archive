@@ -41,6 +41,7 @@ use Digest;
 use File::Compare;
 use File::Spec;
 use MailArchive::Db;
+use MailArchive::Email;
 use MailArchive::Util;
 
 my $digest;
@@ -134,6 +135,9 @@ sub process_message ($$)
 	my $dir = create_seq_directory($uniquebase);
 
 	# TODO: Add processing of stats here
+
+	# save the message headers to disk
+	save_part($dir, "$headers.txt", concatenate_headers($msg->header_pairs()));
 
 	my $numparts = $msg->parts;
 	debug $msg->debug_structure;

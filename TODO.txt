@@ -1,14 +1,10 @@
 Things still to be done, ideas for improvement:
 
-- Do we need to run first as an xfilter, then as a to?
-
 - Work out how to sensibly bounce/forward the email if there's a problem.
   (Probably solved already.)
 
 - Handle emails without a file number.  (Flag them as requiring action and
   bounce them to an administrator.)
-
-- Save email headers in a file.
 
 - If we had to make up a file name, the extension is probably wrong. Check the
   mime type of the content and change the extension if required.  Useful perl
