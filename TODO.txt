@@ -1,10 +1,10 @@
 Things still to be done, ideas for improvement:
 
-- Work out how to sensibly bounce/forward the email if there's a problem.
-  (Probably solved already.)
+- Bounce/forward the email if there's a problem. (Bounce if outgoing, forward
+  to admin if incoming.)  Need a routine that can be called from anywhere in
+  the program to do this.  Email::Sender::Simple looks good for this.
 
-- Handle emails without a file number.  (Flag them as requiring action and
-  bounce them to an administrator.)
+- Flag emails without a file number by bounce/forward as above.
 
 - If we had to make up a file name, the extension is probably wrong. Check the
   mime type of the content and change the extension if required.  Useful perl
@@ -14,11 +14,17 @@ Things still to be done, ideas for improvement:
   through the database and delete entries for files which no longer exist.
 
 - Add a database pre-seeding routing to traverse a filesystem, checksum all of
-  the files, and add them to the database.  It would need to use the file's
-  timestamp as the add to database time - that way older files would be
-  treated as older (not that this is really important).
+  the files, and add them to the database (including SpamAssassin training, if
+  necessary).  It would need to use the file's timestamp as the add to
+  database time - that way older files would be treated as older (not that
+  this is really important).
 
-- Need to think about how spam will be handled.
+- Need to think about how spam will be handled.  Ordinarily it will be handled
+  as an incoming email without a file number, so will be bounced to the admin,
+  which will result in spam doubling for the admin.  Perhaps we need to use
+  the existing correspondence corpus to train a SpamAssassin bayes database in
+  our base directory and discard those emails determined to be spam.  It
+  shouldn't be hard to integrate the SpamAssassin libraries to do so.
 
 - Create a complete test suite.
 
