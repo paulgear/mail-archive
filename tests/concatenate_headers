@@ -1,0 +1,19 @@
+#!/usr/bin/perl
+
+use strict;
+use lib "..";
+use MailArchive::Email;
+
+sub testeq ($$)
+{
+	warn "FAILED: @_" unless ($_[0] eq $_[1]);
+}
+
+my @testlist;
+my $teststr;
+
+@testlist = qw( To myname@example.com From myname@example.com );
+$teststr = 'To: myname@example.com
+From: myname@example.com
+';
+testeq(concatenate_headers(@testlist), $teststr);
