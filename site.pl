@@ -107,10 +107,10 @@ sub is_outgoing ($)
 	my @fromaddr = @_;
 	my $fromdom = $fromaddr[0]->host;
 	debug "fromdom = $fromdom";
-	my $outgoing = grep {$_ eq $fromdom} @localdomains;
-	debug "outgoing = $outgoing";
-	debug "Email is " . ($outgoing ? "outgoing" : "incoming");
-	return $outgoing;
+	my @outgoing = grep {$_ eq $fromdom} @localdomains;
+	debug "outgoing = @outgoing";
+	debug "Email is " . ($#outgoing > -1 ? "outgoing" : "incoming");
+	return $#outgoing > -1;
 }
 
 # return non-null textual description if the email should be dropped without archiving
