@@ -81,7 +81,7 @@ sub open_db ()
 	my ($database, $username, $password) = qw(mailarchive mailarchive mailarchive);
 	debug "Opening database connection";
 	$dbh = DBI->connect("DBI:mysql:database=$database", $username, $password)
-		or error "Cannot open connection to $database: " . $dbh->errstr;
+		or error "Cannot open connection to $database: " . $DBI::errstr;
 }
 
 sub create_tables ()

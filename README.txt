@@ -57,3 +57,16 @@ Installation
 
 - Edit .mailfilter and config.pl to suit your site.
 
+- Create a database and allow the user to use it:
+	mysql -p -u root
+	(Enter root password for mysql)
+	create database mailarchive;
+	grant all privileges on database.* to 'user'@'host'
+		identified by 'password';
+
+  Usually the database name and user name are 'mailarchive' and the host is
+  'localhost', but this is not mandatory - the database may be placed on any
+  appropriate database host.  Mail-archive's database use is limited and it is
+  unlikely to have high performance requirement unless you are feeding it with
+  extremely high mail volumes or rates.
+
