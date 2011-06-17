@@ -127,6 +127,10 @@ sub save_part ($$$)
 	dedup_file($fullpath, $body);
 }
 
+# prototype for recursive function
+sub save_message ($$$);
+
+# save every part of the given message
 sub save_message ($$$)
 {
 	my ($dir, $msg, $level) = @_;
@@ -162,7 +166,7 @@ sub save_message ($$$)
 		}
 		elsif ($type =~ /^message\//) {
 			debug "recursing, message type = $type";
-			save_message($dir, $part, $level + 1);
+			save_message($dir, Email::MIME->new($part->body_raw), $level + 1);
 		}
 		else {
 			save_part($dir, $filename, $part->body);
