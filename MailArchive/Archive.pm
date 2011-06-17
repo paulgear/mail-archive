@@ -127,17 +127,19 @@ sub save_part ($$$)
 	dedup_file($fullpath, $body);
 }
 
-sub process_message ($$)
+sub save_message ($$$)
 {
-	my $uniquebase = shift;
-	my $msg = shift;
+	my ($dir, $msg, $level) = @_;
 
-	my $dir = create_seq_directory($uniquebase);
+	# FIXME: configurable limit
+	if ($level > 99) {
+		error "Reached maximum recursion level in message";
+	}
 
 	# TODO: Add processing of stats here
 
 	# save the message headers to disk
-	save_part($dir, "headers.txt", concatenate_headers($msg->header_pairs()));
+	save_part($dir, "headers$level.txt", concatenate_headers($msg->header_pairs()));
 
 	my $numparts = $msg->parts;
 	debug $msg->debug_structure;
@@ -158,11 +160,24 @@ sub process_message ($$)
 				save_part($dir, $subfilename, $subpart->body);
 			}
 		}
+		elsif ($type =~ /^message\//) {
+			debug "recursing, message type = $type";
+			save_message($dir, $part, $level + 1);
+		}
 		else {
 			save_part($dir, $filename, $part->body);
 		}
 		++$partnum;
 	}
+}
+
+sub process_message ($$)
+{
+	my $uniquebase = shift;
+	my $msg = shift;
+
+	my $dir = create_seq_directory($uniquebase);
+	save_message($dir, $msg, 1);
 }
 
 1;	# file must return true - do not remove this line
