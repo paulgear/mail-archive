@@ -45,15 +45,22 @@ sub check_project_num ($)
 {
 	my $projnum = shift;
 	my @match = $projnum =~ /$projnum_regex/;
-	return ($#match == 0 ? $match[0] : undef);
+	my $ret = ($#match == 0 ? $match[0] : undef);
+	debug "Project number is $ret";
+	return $ret;
 }
 
 # get the two-, four-, and six-digit versions of the file number
 sub split_projnum ($)
 {
-	my @list = ($_[0] =~ /$projnum_split_regex/);
-	if ($#list == 2) {
-		return ($list[0], "$list[0]$list[1]", join("", @list));
+	debug "Splitting $_[0] using /$projnum_split_regex/";
+	my @list1 = ($_[0] =~ /$projnum_split_regex/);
+	my @list = grep { defined $_ } @list1;
+	debug "list = @list";
+	if ($#list > 0) {
+		my @ret = ($list[0], "$list[0]$list[1]", join("", @list));
+		debug "returning (@ret)";
+		return @ret;
 	}
 	else {
 		return undef;
