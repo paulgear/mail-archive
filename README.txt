@@ -52,3 +52,8 @@ Installation
   To install as a normal user on Ubuntu add sudo to the beginning of the above
   command.
 
+- Install the files here in the home directory of a non-privileged user with
+  permissions to write to your project directory.
+
+- Edit .mailfilter and config.pl to suit your site.
+

@@ -92,7 +92,8 @@ if (defined $check_drop) {
 # validate project number
 $projnum = check_project_num(defined $projnum ? $projnum : $subject);
 unless (defined $projnum) {
-	# @@@ TODO - insert magic header & send mail to administrator
+	# TODO - insert magic header & send mail to administrator
+	error "Project number not defined, and cannot find it in message subject";
 }
 
 error "Project number $projnum tainted" if tainted($projnum);
