@@ -72,7 +72,7 @@ sub getdebug ()
 sub setdebug ($)
 {
 	$DEBUG = $_[0] ? 1 : 0;
-	print STDERR "$PROG: debug is " . ($DEBUG ? "on" : "off") . "\n";
+	#print STDERR "$PROG: debug is " . ($DEBUG ? "on" : "off") . "\n";
 }
 
 sub debug ($)

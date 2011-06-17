@@ -75,6 +75,18 @@ my $subject = $msg->header("Subject");
 my $from = $msg->header("From");
 my $to = $msg->header("To");
 
+# Show subject
+debug "subject = $subject";
+
+# work out whether the message is incoming or outgoing
+my @fromaddr = Email::Address->parse($from);
+dump_email_address "fromaddr", $fromaddr[0];
+my $outgoing = is_outgoing(@fromaddr);
+
+# get primary recpient
+my @toaddr = Email::Address->parse($to);
+dump_email_addresses "toaddr", @toaddr;
+
 # check if we've already processed this message
 my $magic = $msg->header($magic_header);
 if (defined $magic) {
@@ -106,15 +118,6 @@ $projdir = get_project_dir($basedir, $projnum);
 error "Project directory for $projnum not found" unless defined $projdir;
 error "Project directory $projdir tainted" if tainted($projdir);
 debug "Project directory is $projdir";
-
-# work out whether the message is incoming or outgoing
-my @fromaddr = Email::Address->parse($from);
-dump_email_address "fromaddr", $fromaddr[0];
-my $outgoing = is_outgoing(@fromaddr);
-
-# get primary recpient
-my @toaddr = Email::Address->parse($to);
-dump_email_addresses "toaddr", @toaddr;
 
 # use the other party as an identifier
 my $otherparty;
