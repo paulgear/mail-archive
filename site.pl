@@ -27,11 +27,11 @@ use lib ".";
 use MailArchive::Util;
 
 # defaults for configurable variables - see config.pl for description
-my $projnum_regex = '\b(FN\d{6})\b';
-my $projnum_split_regex = '^FN(\d\d)(\d\d)(\d\d)$';
-my @searchpath = ( '/', '/files' );
-my @localdomains = ( 'localhost' );
-my $drop_subject_regex = '\b[(\[]PERSONAL[)\]]\b';
+our $projnum_regex = '\b(FN\d{6})\b';
+our $projnum_split_regex = '^FN(\d\d)(\d\d)(\d\d)$';
+our @searchpath = ( '/', '/files' );
+our @localdomains = ( 'localhost' );
+our $drop_subject_regex = '\b[(\[]PERSONAL[)\]]\b';
 
 # defaults for variables which should not need changing
 $magic_header = "X-MailArchive-Status";
