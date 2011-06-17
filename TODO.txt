@@ -1,5 +1,7 @@
 Things still to be done, ideas for improvement:
 
+- Set up DB connect string in config.pl.
+
 - Bounce/forward the email if there's a problem. (Bounce if outgoing, forward
   to admin if incoming.)  Need a routine that can be called from anywhere in
   the program to do this.  Email::Sender::Simple looks good for this.

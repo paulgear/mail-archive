@@ -46,7 +46,7 @@ sub check_project_num ($)
 	my $projnum = shift;
 	my @match = $projnum =~ /$projnum_regex/;
 	my $ret = ($#match == 0 ? $match[0] : undef);
-	debug "Project number is $ret";
+	debug "Project number is " . (defined $ret ? $ret : "UNDEFINED");
 	return $ret;
 }
 
