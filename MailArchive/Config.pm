@@ -39,16 +39,16 @@ $VERSION     = 1.00;
 
 # defaults for configurable variables - see config.pl for description
 our %config = (
-	'archiver-email'	= 'archive@localhost',
-	'admin-email'		= 'root@localhost',
-	'drop-subject-regex'	= '\b[(\[]PERSONAL[)\]]\b',
-	'localdomains'		= [ 'localhost' ],
-	'magic-header'		= 'X-MailArchive-Status',
-	'projnum-regex'		= '\b(FN\d{6})\b',
-	'projnum-split-regex'	= '^FN(\d\d)(\d\d)(\d\d)$',
-	'recursion-level'	= 99,
-	'searchpath'		= [ '/', '/files' ],
-	'split'			= 1,
+	'archiver-email'	=> 'archive@localhost',
+	'admin-email'		=> 'root@localhost',
+	'drop-subject-regex'	=> '\b[(\[]PERSONAL[)\]]\b',
+	'localdomains'		=> [ 'localhost' ],
+	'magic-header'		=> 'X-MailArchive-Status',
+	'projnum-regex'		=> '\b(FN\d{6})\b',
+	'projnum-split-regex'	=> '^FN(\d\d)(\d\d)(\d\d)$',
+	'recursion-level'	=> 99,
+	'searchpath'		=> [ '/', '/files' ],
+	'split'			=> 1,
 );
 
 # pull in the site settings
