@@ -39,8 +39,12 @@ $VERSION     = 1.00;
 
 # defaults for configurable variables - see config.pl for description
 our %config = (
-	'archiver-email'	=> 'archive@localhost',
+
 	'admin-email'		=> 'root@localhost',
+	'archiver-email'	=> 'mailarchive@localhost',
+	'dbconnect'		=> 'DBI:mysql:database=mailarchive',
+	'dbpass'		=> 'mailarchive',
+	'dbuser'		=> 'mailarchive',
 	'drop-subject-regex'	=> '\b[(\[]PERSONAL[)\]]\b',
 	'localdomains'		=> [ 'localhost' ],
 	'magic-header'		=> 'X-MailArchive-Status',
@@ -49,6 +53,7 @@ our %config = (
 	'recursion-level'	=> 99,
 	'searchpath'		=> [ '/', '/files' ],
 	'split'			=> 1,
+
 );
 
 # pull in the site settings

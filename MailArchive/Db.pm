@@ -40,6 +40,7 @@ $VERSION     = 1.00;
 # code dependencies
 use DBI;
 
+use MailArchive::Config;
 use MailArchive::Util;
 
 my $select;
@@ -51,7 +52,7 @@ sub add_file ($$)
 	init() unless defined $insert;
 
 	my ($file, $checksum) = @_;
-	debug "insert $file, $checksum";
+	debug "add_file $file, $checksum";
 	$insert->execute($file, $checksum)
 		or error "Cannot execute insert statement: " . $dbh->errstr;
 #	while (my $ref = $insert->fetchrow_hashref()) {
@@ -65,7 +66,7 @@ sub check_file ($$)
 	init() unless defined $select;
 
 	my ($file, $checksum) = @_;
-	#debug "checking $file, $checksum";
+	debug "check_file $file, $checksum";
 	$select->execute($checksum)
 		or error "Cannot execute select statement: " . $dbh->errstr;
 	my @results;
@@ -79,10 +80,12 @@ sub check_file ($$)
 
 sub open_db ()
 {
-	my ($database, $username, $password) = qw(mailarchive mailarchive mailarchive);
+	my $dbconnect	= getconfig('dbconnect');
+	my $username	= getconfig('dbuser');
+	my $password	= getconfig('dbpass');
 	debug "Opening database connection";
-	$dbh = DBI->connect("DBI:mysql:database=$database", $username, $password)
-		or error "Cannot open connection to $database: " . $DBI::errstr;
+	$dbh = DBI->connect($dbconnect, $username, $password)
+		or error "Cannot open connection $dbconnect: " . $DBI::errstr;
 }
 
 sub create_tables ()

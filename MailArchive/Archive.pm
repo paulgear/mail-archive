@@ -38,8 +38,6 @@ $VERSION     = 1.00;
 
 # code dependencies
 use Digest;
-use Email::Reply;
-use Email::Sender::Simple qw(sendmail);
 use File::Compare;
 use File::Spec;
 use Scalar::Util qw/tainted/;
@@ -89,6 +87,7 @@ sub dedup_file ($$)
 
 		# hard link it to the matching file
 		if (link($check_file, $fullpath)) {
+			debug "Linked $fullpath to $check_file";
 			unlink("$fullpath.tmp")
 				or warn "Cannot delete $fullpath.tmp ($!) - please delete manually";
 			# we're done - no need to check against any more files
@@ -171,33 +170,15 @@ sub save_message ($$$$$)
 	save_part($dir, "headers$level.txt", concatenate_headers($msg->header_pairs()));
 
 	my $numparts = $msg->parts;
-	debug $msg->debug_structure;
+	my $structure = $msg->debug_structure;
+	chomp($structure);
+	debug($structure);
 
 	# iterate through each message part
 	my $partnum = 1;
 	for my $part ($msg->parts) {
 		process_part($basedir, $projnum, $dir, $part, $level, "", $partnum++);
 	}
-}
-
-# send a reply to the given email
-sub send_error ($$$)
-{
-	my $msg = shift;		# the email message to bounce
-	my $diag = shift;		# message to send as a diagnostic
-	my $outgoing = shift;		# whether the message is outgoing
-
-	my $reply = reply
-		to		=> $msg,
-		from		=> getconfig('archiver-email'),
-		attach		=> 1,
-		body		=> <<__REPLY__;
-Error archiving attached email:
-$diag
-__REPLY__
-	$reply->header_set( To => getconfig('admin-email') ) if $outgoing;
-	sendmail($reply);
-	exit 0;
 }
 
 # main email processor

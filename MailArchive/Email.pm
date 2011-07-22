@@ -35,11 +35,16 @@ $VERSION     = 1.00;
 	concatenate_headers
 	dump_email_address
 	dump_email_addresses
+	send_error
 
 );
 @EXPORT_OK   = qw( );
 
 # code dependencies
+use Email::Reply;
+use Email::Sender::Simple qw(sendmail);
+
+use MailArchive::Config;
 use MailArchive::Util;
 
 sub clean_subject ($$)
@@ -47,12 +52,12 @@ sub clean_subject ($$)
 	my ($subject, $projnum) = @_;
 	debug "subject (pre-clean) = $subject";
 	$subject =~ s/((Emailing|FW|Fwd|Re|RE): ?)*//g;	# delete MUA noise
-	$subject =~ s/($projnum *)*//g;			# delete references to the project number
-	$subject =~ s/[<>*|?:]+//g;			# delete samba reserved characters
+	$subject =~ s/($projnum\s*)*//g;		# delete references to the project number
+	$subject =~ s/[\\<>*|?:]+//g;			# delete samba reserved characters
 	$subject =~ s/\s+/ /g;				# compress whitespace
 	$subject =~ s/^\s*//g;				# delete leading whitespace
 	$subject =~ s/\s*$//g;				# delete trailing whitespace
-	debug "subject = $subject";
+	debug "subject (post-clean) = $subject";
 	return $subject;
 }
 
@@ -87,5 +92,34 @@ sub dump_email_addresses ($@)
 	}
 }
 
-1;	# file must return true - do not remove this line
+# ensure $ENV{'PATH'} is not tainted
+sub untaint_path ()
+{
+	$ENV{'PATH'} = '/usr/sbin:/usr/bin:/sbin:/bin';
+}
 
+# send a reply to the given email
+sub send_error ($$$)
+{
+	my $msg = shift;		# the email message to bounce
+	my $diag = shift;		# message to send as a diagnostic
+	my $outgoing = shift;		# whether the message is outgoing
+
+	debug "Dropping archive with reply message: $diag";
+	my $reply = reply(
+		to		=> $msg,
+		from		=> getconfig('archiver-email'),
+		attach		=> 1,
+		quote		=> 0,
+		body		=> <<__REPLY__);
+Error archiving attached email:
+$diag
+__REPLY__
+	$reply->header_set( Subject => 'Mail Archiver Error' );
+	$reply->header_set( To => getconfig('admin-email') ) unless $outgoing;
+	untaint_path();
+	sendmail($reply);
+	exit 0;
+}
+
+1;	# file must return true - do not remove this line

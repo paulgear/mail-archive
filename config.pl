@@ -7,9 +7,14 @@ $config{'archiver-email'}	= 'archive@localhost';
 # Email address of real human being we can email if there's a problem
 $config{'admin-email'}		= 'root@localhost';
 
+# Database connection string, username and password
+$config{'dbconnect'}		= 'DBI:mysql:database=mailarchive';
+$config{'dbuser'}		= 'mailarchive';
+$config{'dbpass'}		= 'mailarchive';
+
 # Regular expression to match subjects which should cause the email to be
 # dropped instead of archived.
-$config{'drop-subject-regex'}	= '\b[(\[]PERSONAL[)\]]\b';
+$config{'drop-subject-regex'}	= '[[)]?\bPERSONAL\b[\])]?';
 
 # Mail from one of these domains is considered outgoing
 $config{'localdomains'}		= [ 'localhost' ];

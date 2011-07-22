@@ -1,10 +1,7 @@
 Things still to be done, ideas for improvement:
 
-- Set up DB connect string in config.pl.
-
-- Bounce/forward the email if there's a problem. (Bounce if outgoing, forward
-  to admin if incoming.)  Need a routine that can be called from anywhere in
-  the program to do this.  Email::Sender::Simple looks good for this.
+- Optional feature to link all correspondence into a single directory with no
+  duplication of files if an identical copy is already there.
 
 - Flag emails without a file number by bounce/forward as above.
 
@@ -41,7 +38,4 @@ Things still to be done, ideas for improvement:
 
 - Change debug/error to warn/die and provide signal handlers that reformat.
   Or just switch to log4perl.
-
-- Optional feature to link all correspondence into a single directory with no
-  duplication of files if an identical copy is already there.
 

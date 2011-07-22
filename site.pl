@@ -117,10 +117,15 @@ sub get_drop_flags ($$$)
 {
 	my ($subject, $from, $to) = @_;
 	my $drop_subject_regex = getconfig('drop-subject-regex');
+	debug "Checking subject ($subject) against ($drop_subject_regex)";
 	if ($subject =~ /$drop_subject_regex/i) {
+		debug "matched - personal email";
 		return "Personal email";
 	}
-	return undef;
+	else {
+		debug "NOT matched";
+		return undef;
+	}
 }
 
 1;	# file must return true - do not remove this line
