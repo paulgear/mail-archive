@@ -37,6 +37,8 @@ Things still to be done, ideas for improvement:
 	size
 	date
 
+- Integrate with Lucene or similar for indexing email intelligently.
+
 - Change debug/error to warn/die and provide signal handlers that reformat.
   Or just switch to log4perl.
 

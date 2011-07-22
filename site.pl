@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# perl fragment to manage configuration for mail-archive
+# perl fragment to manage site-specific code for mail-archive
 #
 # Copyright (c) 2011 Lowenstein & Stumpo <http://www.lowstump.com.au/>
 #
@@ -21,23 +21,8 @@
 #
 
 use File::Path qw/make_path/;
-
-use lib ".";
-
+use MailArchive::Config;
 use MailArchive::Util;
-
-# defaults for configurable variables - see config.pl for description
-our $projnum_regex = '\b(FN\d{6})\b';
-our $projnum_split_regex = '^FN(\d\d)(\d\d)(\d\d)$';
-our @searchpath = ( '/', '/files' );
-our @localdomains = ( 'localhost' );
-our $drop_subject_regex = '\b[(\[]PERSONAL[)\]]\b';
-
-# defaults for variables which should not need changing
-$magic_header = "X-MailArchive-Status";
-
-# pull in the site settings
-require "config.pl";
 
 
 # check that this is a valid project number
@@ -47,6 +32,7 @@ sub check_project_num ($)
 	my @match = $projnum =~ /$projnum_regex/;
 	my $ret = ($#match == 0 ? $match[0] : undef);
 	debug "Project number is " . (defined $ret ? $ret : "UNDEFINED");
+	error "Project number $projnum tainted" if tainted($ret);
 	return $ret;
 }
 

@@ -27,8 +27,11 @@ Installation
 - Requires the following perl CPAN modules:
 	DBI
 	Digest
+	Email::Abstract
 	Email::Address
 	Email::MIME
+	Email::Reply
+	Email::Sender
 	File::Basename
 	File::Compare
 	File::Path
@@ -40,17 +43,21 @@ Installation
   providing compatibility with the database of your choice will be gratefully
   accepted.  :-)
 
-- To install all the required dependencies on Debian, use the following
-  command:
+- To install the required dependencies on Debian, use the following command:
 	apt-get install \
 		libdbd-mysql-perl \
 		libdbi-perl \
 		libdigest-perl \
+		libemail-abstract-perl \
 		libemail-address-perl \
 		libemail-mime-perl \
+		libemail-sender-perl \
 		libfile-path-perl
   To install as a normal user on Ubuntu add sudo to the beginning of the above
   command.
+
+- Install Email::Reply:
+	cpan Email::Reply
 
 - Install the files here in the home directory of a non-privileged user with
   permissions to write to your project directory.
