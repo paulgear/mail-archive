@@ -30,9 +30,11 @@ use strict;
 use Email::Address;
 use Email::MIME;
 use Getopt::Long;
-use Scalar::Util qw/tainted/;
 
 use lib ".";
+
+# functions which may need customising on local sites
+require "site.pl";
 
 use MailArchive::Archive;
 use MailArchive::Email;
@@ -43,9 +45,6 @@ MailArchive::Util->init($0);
 my $split = 1;
 my $debug = getdebug();
 our $magic_header;
-
-# functions which may need customising on local sites
-require "site.pl";
 
 my $result = GetOptions(
 	#"length=i"	=> \$length,    # numeric

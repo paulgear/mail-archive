@@ -42,10 +42,14 @@ use Email::Reply;
 use Email::Sender::Simple qw(sendmail);
 use File::Compare;
 use File::Spec;
+use Scalar::Util qw/tainted/;
+
 use MailArchive::Config;
 use MailArchive::Db;
 use MailArchive::Email;
 use MailArchive::Util;
+
+require "site.pl";
 
 my $digest;
 

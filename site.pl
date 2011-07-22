@@ -20,7 +20,10 @@
 # Author:	Paul Gear <github@libertysys.com.au>
 #
 
+use strict;
+
 use File::Path qw/make_path/;
+
 use MailArchive::Config;
 use MailArchive::Util;
 

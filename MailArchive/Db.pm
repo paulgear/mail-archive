@@ -39,6 +39,7 @@ $VERSION     = 1.00;
 
 # code dependencies
 use DBI;
+
 use MailArchive::Util;
 
 my $select;
