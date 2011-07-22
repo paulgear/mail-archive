@@ -42,6 +42,7 @@ use Email::Reply;
 use Email::Sender::Simple qw(sendmail);
 use File::Compare;
 use File::Spec;
+use MailArchive::Config;
 use MailArchive::Db;
 use MailArchive::Email;
 use MailArchive::Util;
@@ -69,32 +70,28 @@ sub dedup_file ($$)
 		# cleaning up the database.
 		return if $check_file eq $fullpath;
 
-		# we didn't find a matching file
+		# next if we didn't find a matching file
 		next unless defined $check_file;
 
-		# the file in the database doesn't exist
+		# next if the file in the database doesn't exist
 		next unless -e $check_file;
 
-		# the files are not identical
+		# next if the files are not identical
 		next unless compare($check_file, $fullpath) == 0;
 
 		# move the file aside
-		#debug "rename $fullpath -> $fullpath.tmp";
 		rename($fullpath, "$fullpath.tmp")
 			or error "Cannot move aside $fullpath";
 
 		# hard link it to the matching file
-		#debug "link $fullpath -> $check_file";
 		if (link($check_file, $fullpath)) {
-			#debug "unlink $fullpath.tmp";
 			unlink("$fullpath.tmp")
 				or warn "Cannot delete $fullpath.tmp ($!) - please delete manually";
-			# we're done - don't check against any more files
+			# we're done - no need to check against any more files
 			last;
 		}
 		else {
 			warn "Cannot link $fullpath to $check_file ($!)";
-			#debug "rename $fullpath.tmp -> $fullpath";
 			rename("$fullpath.tmp", $fullpath)
 				or warn "Cannot move back $fullpath ($!) - please rename manually";
 		}
@@ -121,9 +118,9 @@ sub save_part ($$$)
 sub limit_recursion ($)
 {
 	my $level = shift;
-	# FIXME: configurable limit
-	if ($level > 99) {
-		error "Reached maximum recursion level in message";
+	my $max = getconfig('recursion-level');
+	if ($level > $max) {
+		error "Reached maximum recursion level ($max) in message";
 	}
 }
 

@@ -29,6 +29,7 @@ use MailArchive::Util;
 sub check_project_num ($)
 {
 	my $projnum = shift;
+	my $projnum_regex = getconfig('projnum-regex');
 	my @match = $projnum =~ /$projnum_regex/;
 	my $ret = ($#match == 0 ? $match[0] : undef);
 	debug "Project number is " . (defined $ret ? $ret : "UNDEFINED");
@@ -39,6 +40,7 @@ sub check_project_num ($)
 # get the two-, four-, and six-digit versions of the file number
 sub split_projnum ($)
 {
+	my $projnum_split_regex = getconfig('projnum-split-regex');
 	debug "Splitting $_[0] using /$projnum_split_regex/";
 	my @list1 = ($_[0] =~ /$projnum_split_regex/);
 	my @list = grep { defined $_ } @list1;
@@ -65,6 +67,7 @@ sub get_project_dir ($$)
 		"",
 	);
 
+	my @searchpath = @{getconfig('searchpath')};
 	# We put the search path and subdirectories inside the number search
 	# so that the most exact matches get priority.
 	for my $num ($projnum, $nnnnnn, $nnnn) {
@@ -94,13 +97,13 @@ sub get_project_email_dir ($$)
 }
 
 # determine whether the email is outgoing by checking whether the domain of
-# the sender occurs in @localdomains
+# the sender occurs in localdomains
 sub is_outgoing ($)
 {
 	my @fromaddr = @_;
 	my $fromdom = $fromaddr[0]->host;
 	debug "fromdom = $fromdom";
-	my @outgoing = grep {$_ eq $fromdom} @localdomains;
+	my @outgoing = grep {$_ eq $fromdom} @{getconfig('localdomains')};
 	debug "outgoing = @outgoing";
 	debug "Email is " . ($#outgoing > -1 ? "outgoing" : "incoming");
 	return $#outgoing > -1;
@@ -110,6 +113,7 @@ sub is_outgoing ($)
 sub get_drop_flags ($$$)
 {
 	my ($subject, $from, $to) = @_;
+	my $drop_subject_regex = getconfig('drop-subject-regex');
 	if ($subject =~ /$drop_subject_regex/i) {
 		return "Personal email";
 	}
