@@ -107,7 +107,6 @@ sub check_seq_file_or_dir
 	for (my $i = 1; $i <= $seq; ++$i) {
 		my $num = sprintf "%04d", $i;
 		my $f = "$base $num";
-		debug "Trying $f";
 		next if -d $f;
 		next if -e "$f.eml";
 		return $f;
@@ -120,7 +119,6 @@ sub create_seq_directory
 {
 	my $dir = check_seq_file_or_dir(@_);
 	if (defined $dir) {
-		debug "$dir does not exist yet, creating";
 		mkpath $dir
 			or error "Cannot create directory $dir: $!";
 		debug "made $dir";

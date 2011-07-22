@@ -19,8 +19,11 @@ $config{'drop-subject-regex'}	= '[[)]?\bPERSONAL\b[\])]?';
 # Mail from one of these domains is considered outgoing
 $config{'localdomains'}		= [ 'localhost' ];
 
-# Magic header which will cause mail to be dropped
-$config{'magic-header'}		= 'X-MailArchive-Status';
+# Subject of emails from mail-archive
+$config{'error-subject'}	= 'Mail Archive Error';
+
+# Header used to identify status emails from mail-archive
+$config{'status-header'}	= 'X-MailArchive-Status';
 
 # Regular expression to match project numbers - must contain () to provide $1
 $config{'projnum-regex'}	= '\b(FN\d{6})\b';

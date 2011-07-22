@@ -138,6 +138,7 @@ sub process_part ($$$$$$$)
 	limit_recursion($level);
 
 	my $type = $part->content_type;
+	$type = "text/plain" unless defined $type;
 	my $filename = (defined $part->filename) ? $part->filename : $part->invent_filename($type);
 
 	debug "part $prefix$partnum: type $type, name: $filename";
@@ -195,16 +196,10 @@ sub process_email ($$$$)
 	my $msg = Email::MIME->new($email);
 
 	# get the message headers
-	my $magic = $msg->header(getconfig('magic-header'));
+	my $header = $msg->header(getconfig('status-header'));
 	my $subject = $msg->header("Subject");
 	my $from = $msg->header("From");
 	my $to = $msg->header("To");
-
-	# check if we've already processed this message
-	if (defined $magic) {
-		debug "Dropping message, already processed: $magic";
-		exit 0;
-	}
 
 	# check for any messages to drop
 	my $check_drop = get_drop_flags($subject, $from, $to);
@@ -226,12 +221,9 @@ sub process_email ($$$$)
 	debug "subject = $subject";
 
 	# validate project number
-	$projnum = check_project_num(defined $projnum ?  $projnum : $subject);
-	unless (defined $projnum) {
-		send_error($msg,
-			"Project number not defined, and cannot find it in message subject",
-			$outgoing);
-	}
+	$projnum = check_project_num(defined $projnum ? $projnum : $subject);
+	send_error($msg, "Project number not found in message", $outgoing)
+		unless (defined $projnum);
 
 	# remove noise from subject
 	$subject = clean_subject($subject, $projnum);

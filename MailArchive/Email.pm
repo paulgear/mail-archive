@@ -105,17 +105,37 @@ sub send_error ($$$)
 	my $diag = shift;		# message to send as a diagnostic
 	my $outgoing = shift;		# whether the message is outgoing
 
-	debug "Dropping archive with reply message: $diag";
+#	my $replybody = Email::MIME->create(
+#		attributes => {
+#			content_type => "text/plain",
+#		},
+#		body => "$diag",
+#	);
+
+	debug "Replying with: $diag";
 	my $reply = reply(
 		to		=> $msg,
 		from		=> getconfig('archiver-email'),
 		attach		=> 1,
 		quote		=> 0,
-		body		=> <<__REPLY__);
-Error archiving attached email:
-$diag
-__REPLY__
-	$reply->header_set( Subject => 'Mail Archiver Error' );
+		body		=> $diag,
+	);
+
+	# replace the first part - its MIME type doesn't seem to get set correctly
+#	my @parts = reply->parts();
+#	$parts[0] = $replybody;
+#	$reply->parts_set(\@parts);
+
+	# check MIME types
+#	$reply->walk_parts(sub {
+#		my ($part) = @_;
+#		debug("part type = " . $part->content_type);
+#	});
+
+	my $errsubj = getconfig('error-subject');
+	my $header  = getconfig('status-header');
+	$reply->header_set( 'Subject' => $errsubj );
+	$reply->header_set( $header => $diag );
 	$reply->header_set( To => getconfig('admin-email') ) unless $outgoing;
 	untaint_path();
 	sendmail($reply);
