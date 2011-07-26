@@ -1,5 +1,9 @@
-This is very sketchy at the moment.  More will be added here as the project
-progresses.
+Overview
+========
+
+Mail-archive is an email archiver written in perl.  It is designed to
+capture all email relating to client projects and file it together under
+the project or file number.
 
 
 Goals/Design
@@ -7,18 +11,13 @@ Goals/Design
 
 Notes on the overall design goals:
 
-- Capture all mail relating to a project.
-
 - Save disk space by saving each message part as a file, checking its SHA-256
   checksum against records in a database, comparing the files byte-by-byte if
   a match is found, and hard-linking the files in the filesystem if they are
   found to be identical.
 
-- Work as an email content mangler so that headers can be added and the
-  message delivery can continue in the case of an error.
-
-- Work exactly as the original client intended, but be flexible enough to
-  adapt to other filing systems.
+- Work to specification for the client who commissioned it, but be flexible
+  enough to adapt to other filing systems.
 
 
 Installation
