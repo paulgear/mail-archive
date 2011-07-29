@@ -38,7 +38,7 @@ $VERSION     = 1.00;
 @EXPORT_OK   = qw( );
 
 # defaults for configurable variables - see config.pl for description
-my %config = (
+our %config = (
 
 	'admin-email'		=> 'root@localhost',
 	'archiver-email'	=> 'mailarchive@localhost',
