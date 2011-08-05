@@ -128,7 +128,7 @@ sub send_error_email ($$)
 
 	# make sure we don't create a mail loop by sending to ourselves
 	my $to = $msg->header('To');
-	if (check_email_address($to, getconfig('archiver-email')) {
+	if (check_email_address($to, getconfig('archiver-email'))) {
 		$msg->header_set( 'To' => getconfig('admin-email') );
 	}
 
