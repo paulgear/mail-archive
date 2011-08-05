@@ -217,7 +217,7 @@ sub process_email ($$$$)
 	# work out whether the message is incoming or outgoing
 	my @fromaddr = Email::Address->parse($from);
 	dump_email_address "fromaddr", $fromaddr[0];
-	my $outgoing = is_outgoing(@fromaddr);
+	my $outgoing = is_local(@fromaddr);
 
 	# get primary recpient
 	my @toaddr = Email::Address->parse($to);

@@ -99,19 +99,18 @@ sub get_project_email_dir ($$)
 	return undef;
 }
 
-# determine whether the email is outgoing by checking whether the domain of
-# the sender occurs in localdomains
-sub is_outgoing ($)
+# determine whether the given email address matches the list of local domains
+sub is_local ($)
 {
-	my @fromaddr = @_;
-	my $fromdom = $fromaddr[0]->host;
-	debug "fromdom = $fromdom";
+	my @addr = @_;
+	my $dom = $addr[0]->host;
+	debug "dom = $dom";
 	my @localdomains = @{getconfig('localdomains')};
 	debug "localdomains = @localdomains";
-	my @outgoing = grep {$_ eq $fromdom} @localdomains;
-	debug "outgoing = @outgoing";
-	debug "Email is " . ($#outgoing > -1 ? "outgoing" : "incoming");
-	return $#outgoing > -1;
+	my @local = grep {$_ eq $dom} @localdomains;
+	debug "local = @local";
+	debug "Email is " . ($#local > -1 ? "local" : "NOT local");
+	return $#local > -1;
 }
 
 # return non-null textual description if the email should be dropped without archiving

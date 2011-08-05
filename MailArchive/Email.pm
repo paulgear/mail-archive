@@ -152,7 +152,21 @@ on delivery to other recipients of the original message.)
 		body		=> "$diag\n$footer\n",
 	);
 
-	$reply->header_set( To => getconfig('admin-email') ) unless $outgoing;
+	# If it's an outgoing message, to address should already be correct.
+	# If it's an incoming message, check the original address against the
+	# list of local domains - if it matches, set the original recipient
+	# to be the recipient of this notification, otherwise, use the admin
+	# address.
+	unless ($outgoing) {
+		my $to = $msg->header('To');
+		my @toaddr = Email::Address->parse($to);
+		if (is_local(@toaddr)) {
+			$reply->header_set( To => $to );
+		}
+		else {
+			$reply->header_set( getconfig('admin-email') );
+		}
+	}
 	send_error_email($reply, $diag);
 }
 
