@@ -140,8 +140,9 @@ sub send_error ($$$)
 	debug "Replying with: $diag";
 	my $footer = "
 The attached email has not been archived.
-(This notice does not affect any delivery
-to other recipients of the original message.)
+
+(This notice applies to mail archiving only and has no bearing
+on delivery to other recipients of the original message.)
 ";
 	my $reply = reply(
 		to		=> $msg,
