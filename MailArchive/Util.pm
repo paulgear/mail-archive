@@ -48,6 +48,7 @@ $VERSION     = 1.00;
 #%EXPORT_TAGS = ( DEFAULT => [qw(&mysub)] );
 
 # code dependencies
+use Email::Address;
 use File::Basename;
 use File::Path;
 use File::Spec;
