@@ -56,6 +56,7 @@ use Scalar::Util qw/tainted/;
 use Unix::Syslog qw(:macros :subs);
 
 use MailArchive::Config;
+use MailArchive::Email;
 
 my $PROG = "";
 my $DEBUG;
