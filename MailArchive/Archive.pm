@@ -156,7 +156,13 @@ sub process_part ($$$$$$$)
 		process_email($basedir, $projnum, $part->body_raw, $level + 1);
 	}
 	else {
-		save_part($dir, $filename, $part->body);
+		# save part if it's an attachment
+		if (defined $part->filename or defined $part->header('Content-Disposition')) {
+			save_part($dir, $filename, $part->body);
+		}
+		else {
+			debug "part $prefix$partnum is not an attachment - skipping";
+		}
 	}
 }
 
@@ -170,7 +176,7 @@ sub save_message ($$$$$)
 	# save the message headers to disk
 	#save_part($dir, "headers$level.txt", concatenate_headers($msg->header_pairs()));
 
-	my $numparts = $msg->parts;
+	#my $numparts = $msg->parts;
 	my $structure = $msg->debug_structure;
 	chomp($structure);
 	debug($structure);
