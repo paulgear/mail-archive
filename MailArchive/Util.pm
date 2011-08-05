@@ -35,6 +35,7 @@ $VERSION     = 1.00;
 	debug
 	error
 	getdebug
+	is_local
 	is_whitespace
 	read_stdin
 	save_file
@@ -52,6 +53,8 @@ use File::Path;
 use File::Spec;
 use Scalar::Util qw/tainted/;
 use Unix::Syslog qw(:macros :subs);
+
+use MailArchive::Config;
 
 my $PROG = "";
 my $DEBUG;
@@ -128,6 +131,20 @@ sub create_seq_directory
 		debug "made $dir";
 	}
 	return $dir;
+}
+
+# determine whether the given email address matches the list of local domains
+sub is_local ($)
+{
+	my @addr = @_;
+	my $dom = $addr[0]->host;
+	debug "dom = $dom";
+	my @localdomains = @{getconfig('localdomains')};
+	debug "localdomains = @localdomains";
+	my @local = grep {$_ eq $dom} @localdomains;
+	debug "local = @local";
+	debug "Email is " . ($#local > -1 ? "local" : "NOT local");
+	return $#local > -1;
 }
 
 # check whether the given string consists entirely of vertical or horizontal whitespace

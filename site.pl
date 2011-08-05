@@ -99,20 +99,6 @@ sub get_project_email_dir ($$)
 	return undef;
 }
 
-# determine whether the given email address matches the list of local domains
-sub is_local ($)
-{
-	my @addr = @_;
-	my $dom = $addr[0]->host;
-	debug "dom = $dom";
-	my @localdomains = @{getconfig('localdomains')};
-	debug "localdomains = @localdomains";
-	my @local = grep {$_ eq $dom} @localdomains;
-	debug "local = @local";
-	debug "Email is " . ($#local > -1 ? "local" : "NOT local");
-	return $#local > -1;
-}
-
 # return non-null textual description if the email should be dropped without archiving
 sub get_drop_flags ($$$)
 {
