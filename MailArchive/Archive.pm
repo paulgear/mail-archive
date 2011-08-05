@@ -256,7 +256,8 @@ sub process_email ($$$$)
 	}
 	debug "otherparty = $otherparty";
 
-	# use the date, subject, and otherparty to create a unique directory name within the correspondence directory
+	# use the date, subject, and otherparty to create a unique directory name within the
+	# correspondence directory
 	my $yyyymmdd = yyyymmdd();
 	my $uniquefile = "$yyyymmdd $otherparty $subject";
 	my $uniquebase = "$emaildir/$uniquefile";
