@@ -269,7 +269,7 @@ sub process_email ($$$$)
 	}
 
 	# save the whole file
-	save_file("$uniquedir/$uniquefile.eml", "email archive file", $email);
+	save_file("$uniquedir/$subject.eml", "email archive file", $email);
 }
 
 1;	# file must return true - do not remove this line
