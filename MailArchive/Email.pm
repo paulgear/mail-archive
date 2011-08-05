@@ -35,6 +35,7 @@ $VERSION     = 1.00;
 	concatenate_headers
 	dump_email_address
 	dump_email_addresses
+	send_admin_error
 	send_error
 
 );
@@ -43,6 +44,7 @@ $VERSION     = 1.00;
 # code dependencies
 use Email::Reply;
 use Email::Sender::Simple qw(sendmail);
+use Email::Simple;
 
 use MailArchive::Config;
 use MailArchive::Util;
@@ -98,6 +100,36 @@ sub untaint_path ()
 	$ENV{'PATH'} = '/usr/sbin:/usr/bin:/sbin:/bin';
 }
 
+sub send_error_email ($$)
+{
+	my $msg = shift;
+	my $diag = shift;
+
+	my $header = getconfig('status-header');
+	$msg->header_set( $header => $diag );
+
+	my $errsubj = getconfig('error-subject');
+	$msg->header_set( 'Subject' => $errsubj );
+
+	untaint_path();
+	sendmail($msg);
+	exit 0;
+}
+
+# send a fatal error to the administrator
+sub send_admin_error ($)
+{
+	my $diag = shift;
+	my $msg = Email::Simple->create(
+		header => [
+			From    => getconfig('archiver-email'),
+			To      => getconfig('admin-email'),
+		],
+		body => "Fatal error in mail archiver:\n\t$diag\nPlease check system logs.\n",
+	);
+	send_error_email($msg, $diag);
+}
+
 # send a reply to the given email
 sub send_error ($$$)
 {
@@ -132,14 +164,8 @@ sub send_error ($$$)
 #		debug("part type = " . $part->content_type);
 #	});
 
-	my $errsubj = getconfig('error-subject');
-	my $header  = getconfig('status-header');
-	$reply->header_set( 'Subject' => $errsubj );
-	$reply->header_set( $header => $diag );
 	$reply->header_set( To => getconfig('admin-email') ) unless $outgoing;
-	untaint_path();
-	sendmail($reply);
-	exit 0;
+	send_error_email($reply, $diag);
 }
 
 1;	# file must return true - do not remove this line

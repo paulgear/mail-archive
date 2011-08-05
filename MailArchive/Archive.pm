@@ -236,8 +236,10 @@ sub process_email ($$$$)
 
 	# search for project directory
 	my $projdir = get_project_dir($basedir, $projnum);
-	error "Project directory for $projnum not found" unless defined $projdir;
-	error "Project directory $projdir tainted" if tainted($projdir);
+	send_error($msg, "Project directory for $projnum not found", $outgoing)
+		unless (defined $projdir);
+	error("Project directory $projdir tainted")
+		if tainted($projdir);
 	debug "Project directory is $projdir";
 
 	# get the incoming/outgoing correspondence directory

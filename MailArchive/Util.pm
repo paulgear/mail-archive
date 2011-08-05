@@ -85,9 +85,9 @@ sub debug ($)
 
 sub error ($)
 {
-	print STDERR "$PROG: $_[0]\n";
 	syslog LOG_CRIT, "%s", $_[0];
-	exit 1;
+	send_admin_error($_[0]);
+	exit 0;
 }
 
 # get current date in yyyymmdd format
