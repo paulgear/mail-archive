@@ -137,13 +137,6 @@ sub send_error ($$$)
 	my $diag = shift;		# message to send as a diagnostic
 	my $outgoing = shift;		# whether the message is outgoing
 
-#	my $replybody = Email::MIME->create(
-#		attributes => {
-#			content_type => "text/plain",
-#		},
-#		body => "$diag",
-#	);
-
 	debug "Replying with: $diag";
 	my $reply = reply(
 		to		=> $msg,
@@ -152,17 +145,6 @@ sub send_error ($$$)
 		quote		=> 0,
 		body		=> $diag,
 	);
-
-	# replace the first part - its MIME type doesn't seem to get set correctly
-#	my @parts = reply->parts();
-#	$parts[0] = $replybody;
-#	$reply->parts_set(\@parts);
-
-	# check MIME types
-#	$reply->walk_parts(sub {
-#		my ($part) = @_;
-#		debug("part type = " . $part->content_type);
-#	});
 
 	$reply->header_set( To => getconfig('admin-email') ) unless $outgoing;
 	send_error_email($reply, $diag);
