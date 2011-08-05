@@ -138,12 +138,17 @@ sub send_error ($$$)
 	my $outgoing = shift;		# whether the message is outgoing
 
 	debug "Replying with: $diag";
+	my $footer = "
+The attached email has not been archived.
+(This notice does not affect any delivery
+to other recipients of the original message.)
+";
 	my $reply = reply(
 		to		=> $msg,
 		from		=> getconfig('archiver-email'),
 		attach		=> 1,
 		quote		=> 0,
-		body		=> $diag,
+		body		=> "$diag\n$footer\n",
 	);
 
 	$reply->header_set( To => getconfig('admin-email') ) unless $outgoing;
