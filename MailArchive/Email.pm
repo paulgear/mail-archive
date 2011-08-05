@@ -100,6 +100,21 @@ sub untaint_path ()
 	$ENV{'PATH'} = '/usr/sbin:/usr/bin:/sbin:/bin';
 }
 
+# determine whether the given address is in the given header
+sub check_email_address ($$)
+{
+	my $header = shift;
+	my $address = shift;
+
+	debug "header = $header";
+	debug "address = $address";
+	my @addrs = Email::Address->parse($header);
+	debug "addrs = @addrs";
+	my @match = grep { $_->address eq $address } @addrs;
+	debug "match = @match";
+	return $#match > -1;
+}
+
 sub send_error_email ($$)
 {
 	my $msg = shift;
@@ -110,6 +125,12 @@ sub send_error_email ($$)
 
 	my $errsubj = getconfig('error-subject');
 	$msg->header_set( 'Subject' => $errsubj );
+
+	# make sure we don't create a mail loop by sending to ourselves
+	my $to = $msg->header('To');
+	if (check_email_address($to, getconfig('archiver-email')) {
+		$msg->header_set( 'To' => getconfig('admin-email') );
+	}
 
 	untaint_path();
 	sendmail($msg);
