@@ -37,6 +37,7 @@ Installation
 	File::Spec
 	Getopt::Long
 	Scalar::Util
+	Unix::Syslog
 
 - Assumes use of DBD::mysql DBI module, but other databases may work.  Patches
   providing compatibility with the database of your choice will be gratefully
@@ -51,7 +52,8 @@ Installation
 		libemail-address-perl \
 		libemail-mime-perl \
 		libemail-sender-perl \
-		libfile-path-perl
+		libfile-path-perl \
+		libunix-syslog-perl
   To install as a normal user on Ubuntu add sudo to the beginning of the above
   command.
 

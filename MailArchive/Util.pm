@@ -51,6 +51,7 @@ use File::Basename;
 use File::Path;
 use File::Spec;
 use Scalar::Util qw/tainted/;
+use Unix::Syslog;
 
 my $PROG = "";
 my $DEBUG;
@@ -62,6 +63,7 @@ sub init ($)
 	$prog =~ m/^(.*)$/;	# untaint
 	$PROG = $1;
 	setdebug(-t 1);
+	openlog $prog, LOG_PID | LOG_CONS, LOG_USER;
 }
 
 sub getdebug ()
@@ -78,11 +80,13 @@ sub setdebug ($)
 sub debug ($)
 {
 	print "$PROG: $_[0]\n" if $DEBUG;
+	syslog LOG_INFO, "%s", $_[0];
 }
 
 sub error ($)
 {
 	print STDERR "$PROG: $_[0]\n";
+	syslog LOG_CRIT, "%s", $_[0];
 	exit 1;
 }
 
