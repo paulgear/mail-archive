@@ -108,7 +108,7 @@ sub check_seq_file_or_dir
 		my $num = sprintf "%04d", $i;
 		my $f = "$base $num";
 		next if -d $f;
-		next if -e "$f.eml";
+		#next if -e "$f.eml";
 		return $f;
 	}
 	return undef;
@@ -124,13 +124,6 @@ sub create_seq_directory
 		debug "made $dir";
 	}
 	return $dir;
-}
-
-# find a uniueq filename given a base name and working out a valid sequence number
-sub get_unique_filename
-{
-	my $file = check_seq_file_or_dir(@_);
-	return (defined $file ? "$file.eml" : undef);
 }
 
 # check whether the given string consists entirely of vertical or horizontal whitespace

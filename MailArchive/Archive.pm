@@ -168,7 +168,7 @@ sub save_message ($$$$$)
 	# TODO: Add processing of stats here
 
 	# save the message headers to disk
-	save_part($dir, "headers$level.txt", concatenate_headers($msg->header_pairs()));
+	#save_part($dir, "headers$level.txt", concatenate_headers($msg->header_pairs()));
 
 	my $numparts = $msg->parts;
 	my $structure = $msg->debug_structure;
@@ -250,18 +250,18 @@ sub process_email ($$$$)
 
 	# use the date, subject, and otherparty to create a unique directory name within the correspondence directory
 	my $yyyymmdd = yyyymmdd();
-	my $uniquebase = "$emaildir/$yyyymmdd $otherparty $subject";
+	my $uniquefile = "$yyyymmdd $otherparty $subject";
+	my $uniquebase = "$emaildir/$uniquefile";
 	debug "uniquebase = ($uniquebase)";
+	my $uniquedir = create_seq_directory($uniquebase);
 
 	if (getconfig('split')) {
 		# split into parts and process the message
-		my $dir = create_seq_directory($uniquebase);
-		save_message($basedir, $projnum, $dir, $msg, 1);
+		save_message($basedir, $projnum, $uniquedir, $msg, 1);
 	}
-	else {
-		# save the whole file
-		save_file(get_unique_filename($uniquebase), "email archive file", $email);
-	}
+
+	# save the whole file
+	save_file("$uniquedir/$uniquefile.eml", "email archive file", $email);
 }
 
 1;	# file must return true - do not remove this line
