@@ -51,7 +51,7 @@ use File::Basename;
 use File::Path;
 use File::Spec;
 use Scalar::Util qw/tainted/;
-use Unix::Syslog;
+use Unix::Syslog qw(:macros :subs);
 
 my $PROG = "";
 my $DEBUG;
