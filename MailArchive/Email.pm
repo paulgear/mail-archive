@@ -49,6 +49,8 @@ use Email::Simple;
 use MailArchive::Config;
 use MailArchive::Util;
 
+require "site.pl";
+
 sub clean_subject ($$)
 {
 	my ($subject, $projnum) = @_;
