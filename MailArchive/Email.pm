@@ -42,6 +42,7 @@ $VERSION     = 1.00;
 @EXPORT_OK   = qw( );
 
 # code dependencies
+use Email::Address;
 use Email::Reply;
 use Email::Sender::Simple qw(sendmail);
 use Email::Simple;
