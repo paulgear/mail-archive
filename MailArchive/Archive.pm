@@ -218,6 +218,7 @@ sub process_email ($$$$)
 	my @fromaddr = Email::Address->parse($from);
 	dump_email_address "fromaddr", $fromaddr[0];
 	my $outgoing = is_local(@fromaddr);
+	debug "outgoing = $outgoing";
 
 	# get primary recpient
 	my @toaddr = Email::Address->parse($to);

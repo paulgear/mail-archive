@@ -35,6 +35,7 @@ $VERSION     = 1.00;
 	concatenate_headers
 	dump_email_address
 	dump_email_addresses
+	is_local
 	send_admin_error
 	send_error
 
@@ -42,7 +43,6 @@ $VERSION     = 1.00;
 @EXPORT_OK   = qw( );
 
 # code dependencies
-use Email::Address;
 use Email::Reply;
 use Email::Sender::Simple qw(sendmail);
 use Email::Simple;
@@ -95,6 +95,20 @@ sub dump_email_addresses ($@)
 	}
 }
 
+# determine whether the given email address matches the list of local domains
+sub is_local (@)
+{
+	my @addr = @_;
+	my $dom = $addr[0]->host;
+	debug "dom = $dom";
+	my @localdomains = @{getconfig('localdomains')};
+	debug "localdomains = @localdomains";
+	my @local = grep {$_ eq $dom} @localdomains;
+	debug "local = @local";
+	debug "Email is " . ($#local > -1 ? "local" : "NOT local");
+	return $#local > -1;
+}
+
 # ensure $ENV{'PATH'} is not tainted
 sub untaint_path ()
 {
@@ -132,6 +146,9 @@ sub send_error_email ($$)
 	if (check_email_address($to, getconfig('archiver-email'))) {
 		$msg->header_set( 'To' => getconfig('admin-email') );
 	}
+
+	$to = $msg->header('To');
+	debug "Sending message to $to";
 
 	untaint_path();
 	sendmail($msg);
@@ -180,8 +197,11 @@ on delivery to other recipients of the original message.)
 	# to be the recipient of this notification, otherwise, use the admin
 	# address.
 	unless ($outgoing) {
+		debug "Message is not outgoing - checking recipients";
 		my $to = $msg->header('To');
+		debug "to = $to";
 		my @toaddr = Email::Address->parse($to);
+		debug "toaddr = @toaddr";
 		if (is_local(@toaddr)) {
 			$reply->header_set( To => $to );
 		}
