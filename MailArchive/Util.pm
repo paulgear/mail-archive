@@ -98,7 +98,8 @@ sub yyyymmdd
 	my $time = shift;
 	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
 		localtime(defined $time ? $time : time());
-	$year += 1900;
+	$year += 1900;		# year is 1900-based
+	$mon  += 1;		# month is 0-based
 	my $yyyymmdd = sprintf("%04d%02d%02d", $year, $mon, $mday);
 	return $yyyymmdd;
 }
