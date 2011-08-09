@@ -95,18 +95,20 @@ sub dump_email_addresses ($@)
 	}
 }
 
-# determine whether the given email address matches the list of local domains
+# determine whether the given email address(s) matches the list of local domains
 sub is_local (@)
 {
-	my @addr = @_;
-	my $dom = $addr[0]->host;
-	debug "dom = $dom";
 	my @localdomains = @{getconfig('localdomains')};
-	debug "localdomains = @localdomains";
-	my @local = grep {$_ eq $dom} @localdomains;
-	debug "local = @local";
-	debug "Email is " . ($#local > -1 ? "local" : "NOT local");
-	return $#local > -1;
+	for my $addr (@_) {
+		my $dom = $addr->host;
+		debug "dom = $dom, addr = " . $addr->format;
+		debug "localdomains = @localdomains";
+		my @local = grep {$_ eq $dom} @localdomains;
+		debug "local = @local";
+		debug "Email is " . ($#local > -1 ? "local" : "NOT local");
+		return 1 if $#local > -1;
+	}
+	return 0;
 }
 
 # ensure $ENV{'PATH'} is not tainted
