@@ -103,7 +103,7 @@ sub get_project_email_dir ($$)
 	# try to create it if not
 	my $err;
 	make_path($dir, { error  => $err });
-	if (@$err) {
+	if (defined $err and @$err) {
 		warn "Cannot create directory $dir: $!";
 		return undef;
 	}
