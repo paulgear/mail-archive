@@ -93,10 +93,23 @@ sub get_project_email_dir ($$)
 {
 	my ($projdir, $outgoing) = @_;
 	my $dir = "$projdir/correspondence/email " . ($outgoing ? "out" : "in");
-	my $ret = make_path($dir);
-	return $dir if $ret == 1 or -d $dir;
-	warn "Cannot create directory $dir: $!";
-	return undef;
+
+	# check if directory already exists
+	if (-d $dir) {
+		# if it does, return an error if it's not writable, or the directory if it is
+		return -w $dir ? $dir : undef;
+	}
+
+	# try to create it if not
+	my $err;
+	make_path($dir, { error  => $err });
+	if (@$err) {
+		warn "Cannot create directory $dir: $!";
+		return undef;
+	}
+	else {
+		return $dir;
+	}
 }
 
 # return non-null textual description if the email should be dropped without archiving
@@ -106,8 +119,9 @@ sub get_drop_flags ($$$)
 	my $drop_subject_regex = getconfig('drop-subject-regex');
 	debug "Checking subject /$subject/ against /$drop_subject_regex/";
 	if ($subject =~ /$drop_subject_regex/i) {
-		debug "matched - personal email";
-		return "Personal email";
+		my $status = defined $1 ? $1 : "personal";
+		debug "matched - $status email";
+		return "$status email";
 	}
 	else {
 		debug "NOT matched";
