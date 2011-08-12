@@ -199,15 +199,18 @@ on delivery to other recipients of the original message.)
 	# to be the recipient of this notification, otherwise, use the admin
 	# address.
 	unless ($outgoing) {
-		debug "Message is not outgoing - checking recipients";
+		debug "Message is incoming - filtering reply recipients";
 		my $to = $msg->header('To');
-		debug "to = $to";
 		my @toaddr = Email::Address->parse($to);
 		debug "toaddr = @toaddr";
-		if (is_local(@toaddr)) {
-			$reply->header_set( To => $to );
+		my @tolist = grep { is_local($_) } @toaddr;
+		debug "toaddr (filtered) = @toaddr";
+		if ($#tolist > -1) {
+			# we have local recipients to use
+			$reply->header_set( To => @tolist );
 		}
 		else {
+			# otherwise, send to the admin
 			$reply->header_set( getconfig('admin-email') );
 		}
 	}
