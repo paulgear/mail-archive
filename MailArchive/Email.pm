@@ -204,7 +204,7 @@ on delivery to other recipients of the original message.)
 		my @toaddr = Email::Address->parse($to);
 		debug "toaddr = @toaddr";
 		my @tolist = grep { is_local($_) } @toaddr;
-		debug "toaddr (filtered) = @toaddr";
+		debug "toaddr (filtered) = @tolist";
 		if ($#tolist > -1) {
 			# we have local recipients to use
 			$reply->header_set( To => @tolist );
