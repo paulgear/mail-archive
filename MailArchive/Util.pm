@@ -32,65 +32,23 @@ $VERSION     = 1.00;
 @EXPORT      = qw(
 
 	create_seq_directory
-	debug
-	error
-	getdebug
 	is_whitespace
 	read_stdin
 	save_file
-	setdebug
 	validate_directory
 	yyyymmdd
 
 );
-@EXPORT_OK   = qw(init);
-#%EXPORT_TAGS = ( DEFAULT => [qw(&mysub)] );
+#@EXPORT_OK   = qw(mysub1);
+#%EXPORT_TAGS = ( DEFAULT => [qw(&mysub2)] );
 
 # code dependencies
-use File::Basename;
 use File::Path;
 use File::Spec;
 use Scalar::Util qw/tainted/;
-use Unix::Syslog qw(:macros :subs);
 
 use MailArchive::Config;
-
-my $PROG = "";
-my $DEBUG;
-
-sub init ($)
-{
-	my $prog = shift;	# get rid of module name argument - why is this needed?
-	$prog = basename shift;	# get argument
-	$prog =~ m/^(.*)$/;	# untaint
-	$PROG = $1;
-	setdebug(-t 1);
-	openlog $prog, LOG_PID | LOG_CONS, LOG_USER;
-}
-
-sub getdebug ()
-{
-	return $DEBUG;
-}
-
-sub setdebug ($)
-{
-	$DEBUG = $_[0] ? 1 : 0;
-	#print STDERR "$PROG: debug is " . ($DEBUG ? "on" : "off") . "\n";
-}
-
-sub debug ($)
-{
-	print "$PROG: $_[0]\n" if $DEBUG;
-	syslog LOG_INFO, "%s", $_[0];
-}
-
-sub error ($)
-{
-	syslog LOG_CRIT, "%s", $_[0];
-	send_admin_error($_[0]);
-	exit 0;
-}
+use MailArchive::Log;
 
 # get current date in yyyymmdd format
 sub yyyymmdd

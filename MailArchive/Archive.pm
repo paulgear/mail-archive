@@ -34,7 +34,8 @@ $VERSION     = 1.00;
 	process_email
 
 );
-#@EXPORT_OK   = qw( init );
+#@EXPORT_OK   = qw(mysub1);
+#%EXPORT_TAGS = ( DEFAULT => [qw(&mysub2)] );
 
 # code dependencies
 use Digest;
@@ -45,6 +46,7 @@ use Scalar::Util qw/tainted/;
 use MailArchive::Config;
 use MailArchive::Db;
 use MailArchive::Email;
+use MailArchive::Log;
 use MailArchive::Util;
 
 require "site.pl";

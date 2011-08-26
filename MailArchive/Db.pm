@@ -35,13 +35,14 @@ $VERSION     = 1.00;
 	add_file
 
 );
-#@EXPORT_OK   = qw( init );
+#@EXPORT_OK   = qw(mysub1);
+#%EXPORT_TAGS = ( DEFAULT => [qw(&mysub2)] );
 
 # code dependencies
 use DBI;
 
 use MailArchive::Config;
-use MailArchive::Util;
+use MailArchive::Log;
 
 my $select;
 my $insert;

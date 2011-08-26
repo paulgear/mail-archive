@@ -36,8 +36,8 @@ $VERSION     = 1.00;
 	dump_email_address
 	dump_email_addresses
 	is_local
-	send_admin_error
 	send_error
+	send_error_email
 
 );
 @EXPORT_OK   = qw( );
@@ -48,7 +48,7 @@ use Email::Sender::Simple qw(sendmail);
 use Email::Simple;
 
 use MailArchive::Config;
-use MailArchive::Util;
+use MailArchive::Log;
 
 sub clean_subject ($$)
 {
@@ -101,11 +101,11 @@ sub is_local (@)
 	my @localdomains = @{getconfig('localdomains')};
 	for my $addr (@_) {
 		my $dom = $addr->host;
-		debug "dom = $dom, addr = " . $addr->format;
+		debug("dom = $dom, addr = " . $addr->format);
 		debug "localdomains = @localdomains";
 		my @local = grep {$_ eq $dom} @localdomains;
 		debug "local = @local";
-		debug "Email is " . ($#local > -1 ? "local" : "NOT local");
+		debug("Email is " . ($#local > -1 ? "local" : "NOT local"));
 		return 1 if $#local > -1;
 	}
 	return 0;
@@ -155,20 +155,6 @@ sub send_error_email ($$)
 	untaint_path();
 	sendmail($msg);
 	exit 0;
-}
-
-# send a fatal error to the administrator
-sub send_admin_error ($)
-{
-	my $diag = shift;
-	my $msg = Email::Simple->create(
-		header => [
-			From    => getconfig('archiver-email'),
-			To      => getconfig('admin-email'),
-		],
-		body => "Fatal error in mail archiver:\n\t$diag\nPlease check system logs.\n",
-	);
-	send_error_email($msg, $diag);
 }
 
 # send a reply to the given email

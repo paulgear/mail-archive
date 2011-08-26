@@ -37,10 +37,10 @@ use lib ".";
 require "site.pl";
 
 use MailArchive::Archive;
-use MailArchive::Email;
+use MailArchive::Log;
 use MailArchive::Util;
 
-MailArchive::Util->init($0);
+MailArchive::Log->init($0);
 
 my $split = 1;
 my $debug = getdebug();
