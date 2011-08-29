@@ -264,6 +264,7 @@ sub process_email ($$$$)
 	my $yyyymmdd = yyyymmdd();
 	my $uniquefile = "$yyyymmdd $otherparty $subject";
 	my $uniquebase = "$emaildir/$uniquefile";
+	$uniquebase =~ s/\s+/ /g;		# compress whitespace
 	debug "uniquebase = ($uniquebase)";
 	my $uniquedir = create_seq_directory($uniquebase);
 
