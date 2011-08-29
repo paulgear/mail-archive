@@ -37,14 +37,12 @@ $VERSION     = 1.00;
 	dump_email_addresses
 	is_local
 	send_error
-	send_error_email
 
 );
 @EXPORT_OK   = qw( );
 
 # code dependencies
 use Email::Reply;
-use Email::Sender::Simple qw(sendmail);
 use Email::Simple;
 
 use MailArchive::Config;
@@ -131,31 +129,6 @@ sub check_email_address ($$)
 	my @match = grep { $_->address eq $address } @addrs;
 	debug "match = @match";
 	return $#match > -1;
-}
-
-sub send_error_email ($$)
-{
-	my $msg = shift;
-	my $diag = shift;
-
-	my $header = getconfig('status-header');
-	$msg->header_set( $header => $diag );
-
-	my $errsubj = getconfig('error-subject');
-	$msg->header_set( 'Subject' => $errsubj );
-
-	# make sure we don't create a mail loop by sending to ourselves
-	my $to = $msg->header('To');
-	if (check_email_address($to, getconfig('archiver-email'))) {
-		$msg->header_set( 'To' => getconfig('admin-email') );
-	}
-
-	$to = $msg->header('To');
-	debug "Sending message to $to";
-
-	untaint_path();
-	sendmail($msg);
-	exit 0;
 }
 
 # send a reply to the given email

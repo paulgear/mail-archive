@@ -45,6 +45,7 @@ use File::Basename;
 use Unix::Syslog qw(:macros :subs);
 
 use MailArchive::Config;
+use MailArchive::Error;
 
 my $PROG = "";
 my $DEBUG;
@@ -74,22 +75,6 @@ sub debug ($)
 {
 	print "$PROG: $_[0]\n" if $DEBUG;
 	syslog LOG_INFO, "%s", $_[0];
-}
-
-# send a fatal error to the administrator
-# FIXME: this really should be in MailArchive::Email, but i'm still trying to understand cyclic
-# dependencies in perl modules
-sub send_admin_error ($)
-{
-	my $diag = shift;
-	my $msg = Email::Simple->create(
-		header => [
-			From    => getconfig('archiver-email'),
-			To      => getconfig('admin-email'),
-		],
-		body => "Fatal error in mail archiver:\n\t$diag\nPlease check system logs.\n",
-	);
-	send_error_email($msg, $diag);
 }
 
 sub error ($)
