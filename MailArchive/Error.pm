@@ -42,6 +42,8 @@ $VERSION     = 1.00;
 use Email::Sender::Simple qw(sendmail);
 use Email::Simple;
 
+use MailArchive::Config;
+
 sub send_error_email ($$)
 {
 	my $msg = shift;
