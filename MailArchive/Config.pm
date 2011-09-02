@@ -53,6 +53,7 @@ our %config = (
 	'recursion-level'	=> 99,
 	'searchpath'		=> [ '/', '/files' ],
 	'split'			=> 1,
+	'subject-override'	=> 1,
 	'status-header'		=> 'X-MailArchive-Status',
 
 );

@@ -130,12 +130,12 @@ sub limit_recursion ($)
 }
 
 # prototypes for recursive functions
-sub process_email ($$$$);
-sub process_part ($$$$$$$);
+sub process_email ($$$$$);
+sub process_part ($$$$$$$$);
 
-sub process_part ($$$$$$$)
+sub process_part ($$$$$$$$)
 {
-	my ($basedir, $projnum, $dir, $part, $level, $prefix, $partnum) = @_;
+	my ($basedir, $projnum, $dir, $part, $level, $prefix, $partnum, $subject) = @_;
 
 	limit_recursion($level);
 
@@ -149,13 +149,13 @@ sub process_part ($$$$$$$)
 		my $subpartnum = 1;
 		for my $subpart ($part->subparts) {
 			process_part($basedir, $projnum, $dir, $subpart, $level + 1,
-				"$prefix$partnum.", $subpartnum);
+				"$prefix$partnum.", $subpartnum, $subject);
 		}
 	}
 	# TODO: work out whether there can be a body on a part with multiple subparts
 	elsif ($type =~ /^message\//) {
 		debug "processing attched message, type = $type";
-		process_email($basedir, $projnum, $part->body_raw, $level + 1);
+		process_email($basedir, $projnum, $part->body_raw, $level + 1, $subject);
 	}
 	else {
 		# save part if it's an attachment
@@ -169,9 +169,9 @@ sub process_part ($$$$$$$)
 }
 
 # save every part of the given message
-sub save_message ($$$$$)
+sub save_message ($$$$$$)
 {
-	my ($basedir, $projnum, $dir, $msg, $level) = @_;
+	my ($basedir, $projnum, $dir, $msg, $level, $subject) = @_;
 
 	# TODO: Add processing of stats here
 
@@ -186,17 +186,14 @@ sub save_message ($$$$$)
 	# iterate through each message part
 	my $partnum = 1;
 	for my $part ($msg->parts) {
-		process_part($basedir, $projnum, $dir, $part, $level, "", $partnum++);
+		process_part($basedir, $projnum, $dir, $part, $level, "", $partnum++, $subject);
 	}
 }
 
 # main email processor
-sub process_email ($$$$)
+sub process_email ($$$$$)
 {
-	my $basedir = shift;
-	my $projnum = shift;
-	my $email = shift;
-	my $level = shift;
+	my ($basedir, $projnum, $email, $level, $subject_override) = @_;
 
 	limit_recursion($level);
 
@@ -216,6 +213,16 @@ sub process_email ($$$$)
 		exit 0;
 	}
 
+	# Show subject
+	debug "subject = $subject";
+
+	# put in a subject override if necessary
+	if (getconfig('subject-override') && defined $subject_override) {
+		unless ($subject_override =~ /^\s*$/) {
+			$subject = $subject_override;
+		}
+	}
+
 	# work out whether the message is incoming or outgoing
 	my @fromaddr = Email::Address->parse($from);
 	dump_email_address "fromaddr", $fromaddr[0];
@@ -225,9 +232,6 @@ sub process_email ($$$$)
 	# get primary recpient
 	my @toaddr = Email::Address->parse($to);
 	dump_email_addresses "toaddr", @toaddr;
-
-	# Show subject
-	debug "subject = $subject";
 
 	# validate project number
 	$projnum = check_project_num(defined $projnum ? $projnum : $subject);
@@ -270,7 +274,7 @@ sub process_email ($$$$)
 
 	if (getconfig('split')) {
 		# split into parts and process the message
-		save_message($basedir, $projnum, $uniquedir, $msg, 1);
+		save_message($basedir, $projnum, $uniquedir, $msg, 1, $subject);
 	}
 
 	# save the whole file

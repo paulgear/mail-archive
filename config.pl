@@ -42,5 +42,9 @@ $config{'searchpath'}		= [ '/', '/files' ];
 # Only useful for debugging.
 $config{'split'}		= 1;
 
+# Flag: whether we should override the subject of attached emails with the outer email's subject
+# - defaults to true
+$config{'subject-override'}	= 1;
+
 1;	# file must return true - do not remove this line
 

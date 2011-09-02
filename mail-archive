@@ -64,5 +64,5 @@ $basedir = validate_directory($basedir);
 # read our input email
 my $email = read_stdin();
 
-process_email($basedir, $projnum, $email, 0);
+process_email($basedir, $projnum, $email, 0, undef);
 
