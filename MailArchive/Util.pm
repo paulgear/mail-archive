@@ -33,6 +33,7 @@ $VERSION     = 1.00;
 
 	create_seq_directory
 	is_whitespace
+	parse_date
 	read_stdin
 	save_file
 	validate_directory
@@ -43,24 +44,13 @@ $VERSION     = 1.00;
 #%EXPORT_TAGS = ( DEFAULT => [qw(&mysub2)] );
 
 # code dependencies
+use Date::Parse;
 use File::Path;
 use File::Spec;
 use Scalar::Util qw/tainted/;
 
 use MailArchive::Config;
 use MailArchive::Log;
-
-# get current date in yyyymmdd format
-sub yyyymmdd
-{
-	my $time = shift;
-	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
-		localtime(defined $time ? $time : time());
-	$year += 1900;		# year is 1900-based
-	$mon  += 1;		# month is 0-based
-	my $yyyymmdd = sprintf("%04d%02d%02d", $year, $mon, $mday);
-	return $yyyymmdd;
-}
 
 # Given a base and a maximum sequence number (default 999),
 # find the first unused name in the sequence.
@@ -98,6 +88,14 @@ sub is_whitespace ($)
 	return $_[0] =~ /^([[:space:]]|\R)*$/s;
 }
 
+# Parse the given date string and return it in standard Unix time format.
+# Return undef if the date cannot be parsed.
+sub parse_date ($)
+{
+	my $time = str2time($_[0]);
+	return defined $time ? $time : undef;
+}
+
 # read all of standard input into a single scalar and return it
 sub read_stdin ()
 {
@@ -127,6 +125,18 @@ sub validate_directory ($)
 	$dir = $1;
 	error "Base directory $dir tainted" if tainted($dir);
 	return $dir;
+}
+
+# get current (or supplied) date in yyyymmdd format
+sub yyyymmdd
+{
+	my $time = shift;
+	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
+		localtime(defined $time ? $time : time());
+	$year += 1900;		# year is 1900-based
+	$mon  += 1;		# month is 0-based
+	my $yyyymmdd = sprintf("%04d%02d%02d", $year, $mon, $mday);
+	return $yyyymmdd;
 }
 
 1;	# file must return true - do not remove this line

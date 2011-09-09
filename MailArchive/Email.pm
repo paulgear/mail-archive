@@ -35,6 +35,7 @@ $VERSION     = 1.00;
 	concatenate_headers
 	dump_email_address
 	dump_email_addresses
+	get_local_received_date
 	is_local
 	send_error
 
@@ -94,20 +95,85 @@ sub dump_email_addresses ($@)
 	}
 }
 
+
+# Return the date in the given Received: email header
+sub get_received_date ($)
+{
+	my $str = shift;
+	my @date = $str =~ /((?:\S+,\s+)?\d+\s+\S+\s+\d+\s+\d+:\d+:\d+(?:\s+[+-]\d+)?(?:\s+\(?\S+\)?)?)/;
+	return $#date == 0 ? $date[0] : "";
+}
+
+# Return the hostname in the given Received: email header.
+sub get_received_host ($)
+{
+	my $str = shift;
+	my @host = $str =~ /by\s+(\S+)/;
+	return $#host == 0 ? $host[0] : "";
+}
+
 # determine whether the given email address(s) matches the list of local domains
 sub is_local (@)
 {
 	my @localdomains = @{getconfig('localdomains')};
+	debug "localdomains = @localdomains";
 	for my $addr (@_) {
 		my $dom = $addr->host;
 		debug("dom = $dom, addr = " . $addr->format);
-		debug "localdomains = @localdomains";
 		my @local = grep {$_ eq $dom} @localdomains;
 		debug "local = @local";
 		debug("Email is " . ($#local > -1 ? "local" : "NOT local"));
 		return 1 if $#local > -1;
 	}
 	return 0;
+}
+
+# determine whether the given string contains a hostname which matches the list of local domains
+sub is_local_host (@)
+{
+	my @localdomains = grep { !/^localhost/ } @{getconfig('localdomains')};
+	debug "localdomains = @localdomains";
+	for my $str (@_) {
+		debug("str = $str");
+		my @local = grep {$str =~ /$_$/} @localdomains;
+		debug "local = @local";
+		debug("Email is " . ($#local > -1 ? "local" : "NOT local"));
+		return 1 if $#local > -1;
+	}
+	return 0;
+}
+
+# Parse the given list of Received: email headers, returning a pointer to an array of pointers
+# to arrays containing the received host, the date of receipt (as a literal string from the
+# original header), and the original header itself.
+sub received_hosts (@)
+{
+	my $hosts;
+	my $i = 0;
+	for my $r (@_) {
+		chomp $r;
+		#print "Received |$r|\n";
+		my $host = get_received_host $r;
+		my $date = get_received_date $r;
+		if ($date ne "") {
+			$hosts->[$i++] = [ $host, $date, $r ];
+		}
+	}
+	return $hosts;
+}
+
+# Given a list of received headers, return the earliest date the message was received by a
+# server in localdomains.
+sub get_local_received_date (@)
+{
+	my $list = received_hosts(@_);
+	for my $entry (reverse @$list) {
+		next unless defined $entry;
+		debug sprintf("Received entry: %s %s\n", scalar localtime parse_date($entry->[1]),
+			$entry->[0]);
+		return parse_date($entry->[1]) if is_local_host($entry->[0]);
+	}
+	return undef;
 }
 
 # ensure $ENV{'PATH'} is not tainted

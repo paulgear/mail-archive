@@ -263,9 +263,13 @@ sub process_email ($$$$$)
 	}
 	debug "otherparty = $otherparty";
 
+	# try to get the exact date of when we received the email
+	my @received = $email->header("Received");
+	my $received = get_local_received_date(@received);
+
 	# use the date, subject, and otherparty to create a unique directory name within the
 	# correspondence directory
-	my $yyyymmdd = yyyymmdd();
+	my $yyyymmdd = defined $received ? yyyymmdd($received) : yyyymmdd();
 	my $uniquefile = "$yyyymmdd $otherparty $subject";
 	my $uniquebase = "$emaildir/$uniquefile";
 	$uniquebase =~ s/\s+/ /g;		# compress whitespace
