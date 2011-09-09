@@ -163,6 +163,14 @@ sub received_hosts (@)
 	return $hosts;
 }
 
+# Parse the given date string and return it in standard Unix time format.
+# Return undef if the date cannot be parsed.
+sub parse_date ($)
+{
+	my $time = str2time($_[0]);
+	return defined $time ? $time : undef;
+}
+
 # Given a list of received headers, return the earliest date the message was received by a
 # server in localdomains.
 sub get_local_received_date (@)

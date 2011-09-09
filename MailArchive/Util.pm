@@ -33,7 +33,6 @@ $VERSION     = 1.00;
 
 	create_seq_directory
 	is_whitespace
-	parse_date
 	read_stdin
 	save_file
 	validate_directory
@@ -86,14 +85,6 @@ sub is_whitespace ($)
 {
 	return 1 unless defined $_[0];
 	return $_[0] =~ /^([[:space:]]|\R)*$/s;
-}
-
-# Parse the given date string and return it in standard Unix time format.
-# Return undef if the date cannot be parsed.
-sub parse_date ($)
-{
-	my $time = str2time($_[0]);
-	return defined $time ? $time : undef;
 }
 
 # read all of standard input into a single scalar and return it
