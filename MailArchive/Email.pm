@@ -183,21 +183,6 @@ sub untaint_path ()
 	$ENV{'PATH'} = '/usr/sbin:/usr/bin:/sbin:/bin';
 }
 
-# determine whether the given address is in the given header
-sub check_email_address ($$)
-{
-	my $header = shift;
-	my $address = shift;
-
-	debug "header = $header";
-	debug "address = $address";
-	my @addrs = Email::Address->parse($header);
-	debug "addrs = @addrs";
-	my @match = grep { $_->address eq $address } @addrs;
-	debug "match = @match";
-	return $#match > -1;
-}
-
 # send a reply to the given email
 sub send_error ($$$)
 {
