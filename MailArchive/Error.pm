@@ -58,6 +58,12 @@ sub check_email_address ($$)
 	return $#match > -1;
 }
 
+# ensure $ENV{'PATH'} is not tainted
+sub untaint_path ()
+{
+	$ENV{'PATH'} = '/usr/sbin:/usr/bin:/sbin:/bin';
+}
+
 sub send_error_email ($$)
 {
 	my $msg = shift;

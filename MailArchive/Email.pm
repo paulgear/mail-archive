@@ -177,12 +177,6 @@ sub get_local_received_date (@)
 	return undef;
 }
 
-# ensure $ENV{'PATH'} is not tainted
-sub untaint_path ()
-{
-	$ENV{'PATH'} = '/usr/sbin:/usr/bin:/sbin:/bin';
-}
-
 # send a reply to the given email
 sub send_error ($$$)
 {
