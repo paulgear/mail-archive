@@ -47,6 +47,7 @@ use Email::Reply;
 use Email::Simple;
 
 use MailArchive::Config;
+use MailArchive::Error;
 use MailArchive::Log;
 
 sub clean_subject ($$)
