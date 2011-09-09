@@ -43,6 +43,7 @@ $VERSION     = 1.00;
 @EXPORT_OK   = qw( );
 
 # code dependencies
+use Date::Parse;
 use Email::Reply;
 use Email::Simple;
 

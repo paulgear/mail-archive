@@ -43,7 +43,6 @@ $VERSION     = 1.00;
 #%EXPORT_TAGS = ( DEFAULT => [qw(&mysub2)] );
 
 # code dependencies
-use Date::Parse;
 use File::Path;
 use File::Spec;
 use Scalar::Util qw/tainted/;
