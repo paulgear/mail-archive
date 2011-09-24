@@ -58,15 +58,35 @@ sub init ()
 	$digest = Digest->new("SHA-256");
 }
 
-# checksum file, find out whether it matches another file in the database
-sub dedup_file ($$)
+# return the checksum for the given data
+sub get_checksum ($)
 {
 	init() unless $digest;
 
-	my ($fullpath, $data) = @_;
+	my $data = shift;
 	$digest->add($data);
 	my $cksum = $digest->hexdigest;
 	debug "checksum $cksum";
+	return $cksum;
+}
+
+# return the checksum if we've got this message in the database,
+# otherwise return undef
+sub seen_message ($)
+{
+	my $data = shift;
+	my $cksum = get_checksum($data);
+	if (has_file_checksum($cksum) {
+		return $cksum;
+	}
+	return undef;
+}
+
+# checksum file, find out whether it matches another file in the database
+sub dedup_file ($$)
+{
+	my ($fullpath, $data) = @_;
+	my $cksum = get_checksum($data);
 
 	for my $check_file (check_file($fullpath, $cksum)) {
 		# If we have this exact file & checksum already in the db, do nothing.
@@ -205,6 +225,17 @@ sub process_email ($$$$$)
 	my $subject = $msg->header("Subject");
 	my $from = $msg->header("From");
 	my $to = $msg->header("To");
+
+	if ($level == 0) {
+		my $cksum = seen_message($email);
+		if (defined $cksum) {
+			debug "Already processed message with checksum $cksum - dropping:";
+			debug "\tfrom = $from";
+			debug "\tto   = $to";
+			debug "\tsubj = $subject";
+			exit 0;
+		}
+	}
 
 	# check for any messages to drop
 	my $check_drop = get_drop_flags($subject, $from, $to);

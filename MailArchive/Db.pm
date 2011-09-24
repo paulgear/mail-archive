@@ -31,8 +31,9 @@ $VERSION     = 1.00;
 @ISA         = qw(Exporter);
 @EXPORT      = qw(
 
-	check_file
 	add_file
+	check_file
+	has_file_checksum
 
 );
 #@EXPORT_OK   = qw(mysub1);
@@ -45,6 +46,7 @@ use MailArchive::Config;
 use MailArchive::Log;
 
 my $select;
+my $select_count;
 my $insert;
 my $dbh;
 
@@ -77,6 +79,30 @@ sub check_file ($$)
 	}
 	$select->finish();
 	return @results;
+}
+
+# return the number of matches in the database for the given checksum
+sub has_file_checksum ($)
+{
+	init() unless defined $select_count;
+
+	my $checksum = shift;
+	debug "has_file_checksum $checksum";
+
+	$select_count->execute($checksum)
+		or error "Cannot execute select statement: " . $dbh->errstr;
+	my $result = $select_count->fetchrow_arrayref;
+	$select_count->finish();
+
+	unless (defined $result) {
+		debug "Error running checksum select: " . $dbh->errstr;
+		return 0;
+	}
+	unless (defined $result->[0]) {
+		debug "Empty result from checksum select: " . $dbh->errstr;
+		return 0;
+	}
+	return $result->[0];
 }
 
 sub open_db ()
@@ -113,6 +139,13 @@ sub create_statements ()
 		order by time
 	")
 		or error "Cannot create select statement: " . $dbh->errstr;
+	debug "Creating checksum select statement";
+	$checksum_select = $dbh->prepare("
+		select count(*)
+		from fileinfo
+		where checksum = ?
+	")
+		or error "Cannot create checksum select statement: " . $dbh->errstr;
 	debug "Creating insert statement";
 	$insert = $dbh->prepare("
 		insert into fileinfo (filename, checksum) values (?, ?)
