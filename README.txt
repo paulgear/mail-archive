@@ -24,6 +24,7 @@ Installation
 ============
 
 - Requires the following perl CPAN modules:
+	Date::Parse
 	DBI
 	Digest
 	Email::Abstract
@@ -53,6 +54,7 @@ Installation
 		libemail-mime-perl \
 		libemail-sender-perl \
 		libfile-path-perl \
+		libtimedate-perl \
 		libunix-syslog-perl
   To install as a normal user on Ubuntu add sudo to the beginning of the above
   command.
