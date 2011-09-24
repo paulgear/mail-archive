@@ -177,6 +177,7 @@ sub parse_date ($)
 sub get_local_received_date (@)
 {
 	my $list = received_hosts(@_);
+	return undef unless defined $list;
 	for my $entry (reverse @$list) {
 		next unless defined $entry;
 		debug sprintf("Received entry: %s %s\n", scalar localtime parse_date($entry->[1]),
