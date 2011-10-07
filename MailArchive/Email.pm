@@ -130,16 +130,15 @@ sub is_local (@)
 	return 0;
 }
 
-# determine whether the given string contains a hostname which matches the list of local domains
+# determine whether the given string(s) contain(s) a hostname which matches the list of local
+# domains
 sub is_local_host (@)
 {
 	my @localdomains = grep { !/^localhost/ } @{getconfig('localdomains')};
 	debug "localdomains = @localdomains";
 	for my $str (@_) {
-		debug("str = $str");
 		my @local = grep {$str =~ /$_$/} @localdomains;
-		debug "local = @local";
-		debug("Email is " . ($#local > -1 ? "local" : "NOT local"));
+		debug "$str is" . ($#local > -1 ? "" : " NOT") . " local (@local)";
 		return 1 if $#local > -1;
 	}
 	return 0;
