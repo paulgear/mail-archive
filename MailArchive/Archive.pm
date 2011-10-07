@@ -282,9 +282,17 @@ sub process_email ($$$$$)
 		save_message($basedir, $projnum, $uniquedir, $msg, 1, $subject);
 	}
 
-	# save the whole file
-	save_file("$uniquedir/$subject.eml", "email archive file", $email);
-	dedup_file("$uniquedir/$subject.eml", $email);
+	# save the whole file unless it's copied to the archiver
+	if (getconfig('smart-outgoing')) {
+		if ($outgoing && $toaddr[0]->address eq getconfig('archiver-email')) {
+			debug "Cannot remove outgoing directory $uniquedir: $!"
+				unless rmdir $uniquedir;
+		}
+		else {
+			save_file("$uniquedir/$subject.eml", "email archive file", $email);
+			dedup_file("$uniquedir/$subject.eml", $email);
+		}
+	}
 }
 
 1;	# file must return true - do not remove this line

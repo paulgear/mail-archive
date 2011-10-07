@@ -38,6 +38,10 @@ $config{'recursion-level'}	= 99;
 # relative to the base directory specified on the mail-archive command line.
 $config{'searchpath'}		= [ '/', '/files' ];
 
+# Flag: whether we should skip saving the whole email if it's sent directly to
+# the archiver from a local address.
+$config{'smart-outgoing'}	= 0;
+
 # Flag: whether we should split the email into parts - default true.
 # Only useful for debugging.
 $config{'split'}		= 1;

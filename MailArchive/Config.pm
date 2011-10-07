@@ -52,6 +52,7 @@ our %config = (
 	'projnum-split-regex'	=> '^FN(\d\d)(\d\d)(\d\d)$',
 	'recursion-level'	=> 99,
 	'searchpath'		=> [ '/', '/files' ],
+	'smart-outgoing'	=> 0,
 	'split'			=> 1,
 	'subject-override'	=> 1,
 	'status-header'		=> 'X-MailArchive-Status',
