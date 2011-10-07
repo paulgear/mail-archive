@@ -3,12 +3,6 @@ Things still to be done, ideas for improvement:
 - Optional feature to link all correspondence into a single directory with no
   duplication of files if an identical copy is already there.
 
-- Flag emails without a file number by bounce/forward as above.
-
-- If we had to make up a file name, the extension is probably wrong. Check the
-  mime type of the content and change the extension if required.  Useful perl
-  modules might be File::Mimeinfo::Magic and MIME::Types.
-
 - Add a database tidying routine to run, say, once per month, which will go
   through the database and delete entries for files which no longer exist.
 
@@ -35,7 +29,4 @@ Things still to be done, ideas for improvement:
 	date
 
 - Integrate with Lucene or similar for indexing email intelligently.
-
-- Change debug/error to warn/die and provide signal handlers that reformat.
-  Or just switch to log4perl.
 
