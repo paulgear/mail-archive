@@ -206,13 +206,6 @@ sub process_email ($$$$$)
 	my $from = $msg->header("From");
 	my $to = $msg->header("To");
 
-	# check for any messages to drop
-	my $check_drop = get_drop_flags($subject, $from, $to);
-	if (defined $check_drop) {
-		debug "Dropping email: $check_drop";
-		exit 0;
-	}
-
 	# Show subject
 	debug "subject = $subject";
 
@@ -220,7 +213,15 @@ sub process_email ($$$$$)
 	if (getconfig('subject-override') && defined $subject_override) {
 		unless ($subject_override =~ /^\s*$/) {
 			$subject = $subject_override;
+			debug "subject overridden with $subject";
 		}
+	}
+
+	# check for any messages to drop
+	my $check_drop = get_drop_flags($subject, $from, $to);
+	if (defined $check_drop) {
+		debug "Dropping email: $check_drop";
+		exit 0;
 	}
 
 	# work out whether the message is incoming or outgoing
