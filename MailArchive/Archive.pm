@@ -104,6 +104,14 @@ sub dedup_file ($$)
 	add_file($fullpath, $cksum);
 }
 
+# save the file and dedup
+sub save_dedup_file ($$$)
+{
+	my ($file, $msg, $content) = @_;
+	save_file($file, $msg, $content);
+	dedup_file($file, $content);
+}
+
 # save the body of the given file part to disk
 sub save_part ($$$)
 {
@@ -115,8 +123,7 @@ sub save_part ($$$)
 	}
 	my $fullpath = File::Spec->catfile($dir, $filename);
 	error "File $fullpath already exists" if -e $fullpath;
-	save_file($fullpath, "message part file", $body);
-	dedup_file($fullpath, $body);
+	save_dedup_file($fullpath, "message part file", $body);
 }
 
 # exit with error if we've passed the maximum recursion limit
@@ -285,13 +292,15 @@ sub process_email ($$$$$)
 	# save the whole file unless it's copied to the archiver
 	if (getconfig('smart-outgoing')) {
 		if ($outgoing && $toaddr[0]->address eq getconfig('archiver-email')) {
-			debug "Cannot remove outgoing directory $uniquedir: $!"
-				unless rmdir $uniquedir;
+			debug "Removing $uniquedir (if possible)";
+			debug "$uniquedir not removed: $!" unless rmdir $uniquedir;
 		}
 		else {
-			save_file("$uniquedir/$subject.eml", "email archive file", $email);
-			dedup_file("$uniquedir/$subject.eml", $email);
+			save_dedup_file("$uniquedir/$subject.eml", "email archive file", $email);
 		}
+	}
+	else {
+		save_dedup_file("$uniquedir/$subject.eml", "email archive file", $email);
 	}
 }
 
