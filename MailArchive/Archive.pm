@@ -40,6 +40,7 @@ $VERSION     = 1.00;
 # code dependencies
 use Digest;
 use File::Compare;
+use File::Glob ':glob';
 use File::Spec;
 use Scalar::Util qw/tainted/;
 
@@ -90,8 +91,8 @@ sub dedup_file ($$)
 		# hard link it to the matching file
 		if (link($check_file, $fullpath)) {
 			debug "Linked $fullpath to $check_file";
-			unlink("$fullpath.tmp")
-				or warn "Cannot delete $fullpath.tmp ($!) - please delete manually";
+			warn "Cannot delete $fullpath.tmp ($!) - please delete manually"
+				unless unlink("$fullpath.tmp") == 1;
 			# we're done - no need to check against any more files
 			last;
 		}
@@ -197,6 +198,26 @@ sub save_message ($$$$$$)
 	}
 }
 
+# remove all files in the given directory which have more than 1 hard link
+sub remove_dedup_files ($)
+{
+	for my $file (bsd_glob "$_[0]/*") {
+		debug "Checking $file";
+		next unless -e $file;
+		$file =~ /^(.*)$/;	# untaint
+		$file = $1;
+		my @stat = stat($file);
+		if ($stat[3] > 1) {
+			debug "Removing file $file";
+			debug "Cannot remove $file: $!"
+				unless unlink($file) == 1;
+		}
+		else {
+			debug "Not removing $file";
+		}
+	}
+}
+
 # main email processor
 sub process_email ($$$$$)
 {
@@ -292,7 +313,8 @@ sub process_email ($$$$$)
 	# save the whole file unless it's copied to the archiver
 	if (getconfig('smart-outgoing')) {
 		if ($outgoing && $toaddr[0]->address eq getconfig('archiver-email')) {
-			debug "Removing $uniquedir (if possible)";
+			remove_dedup_files($uniquedir);
+			debug "Removing directory $uniquedir";
 			debug "$uniquedir not removed: $!" unless rmdir $uniquedir;
 		}
 		else {
