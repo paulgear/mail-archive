@@ -37,6 +37,7 @@ use lib ".";
 require "site.pl";
 
 use MailArchive::Archive;
+use MailArchive::Config;
 use MailArchive::Log;
 use MailArchive::Util;
 
