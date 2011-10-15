@@ -7,13 +7,15 @@ DIR="/my/project/directory"		# the base dir in which to save project files
 logfile $HOME/mailfilter.log
 
 # Drop messages from mail-archive itself
-if (/From: *$ADMIN/) {
+if (/From: *$ADMIN/)
+{
 	log "Dropping message from $ADMIN"
 	to "/dev/null"			# make sure we get a log of the email details
 }
 
 # drop non-project-related mesages
-if (/Subject:.*[[(](PERSONAL|MESSAGE|GENERAL)[)\]]/) {
+if (/Subject:.*[[(](PERSONAL|MESSAGE|GENERAL)[)\]]/)
+{
 	log "Dropping ($MATCH) message"
 	to "/dev/null"			# make sure we get a log of the email details
 }
