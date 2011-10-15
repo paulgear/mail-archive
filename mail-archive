@@ -54,6 +54,7 @@ my $result = GetOptions(
 );
 
 setdebug($debug);
+setconfig('split', $split);
 
 my $basedir = shift @ARGV;
 my $projnum = shift @ARGV;
