@@ -78,15 +78,22 @@ sub dedup_file ($$)
 		# next if we didn't find a matching file
 		next unless defined $check_file;
 
-		# next if the file in the database doesn't exist
-		next unless -e $check_file;
+		# if the file in the database doesn't exist, remove the db entry
+		unless (-e $check_file) {
+			debug "Non-existent file $check_file in database - cleaning up";
+			remove_file $check_file;
+			next;
+		}
 
 		# next if the files are not identical
 		next unless compare($check_file, $fullpath) == 0;
 
 		# move the file aside
-		rename($fullpath, "$fullpath.tmp")
-			or error "Cannot move aside $fullpath";
+		unless (rename($fullpath, "$fullpath.tmp")) {
+			warn "Cannot move aside $fullpath";
+			# we're done - we'll just put up with no dedup
+			last;
+		}
 
 		# hard link it to the matching file
 		if (link($check_file, $fullpath)) {

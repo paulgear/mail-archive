@@ -31,8 +31,9 @@ $VERSION     = 1.00;
 @ISA         = qw(Exporter);
 @EXPORT      = qw(
 
-	check_file
 	add_file
+	check_file
+	remove_file
 
 );
 #@EXPORT_OK   = qw(mysub1);
@@ -46,6 +47,7 @@ use MailArchive::Log;
 
 my $select;
 my $insert;
+my $delete;
 my $dbh;
 
 sub add_file ($$)
@@ -53,12 +55,8 @@ sub add_file ($$)
 	init() unless defined $insert;
 
 	my ($file, $checksum) = @_;
-	debug "add_file $file, $checksum";
 	$insert->execute($file, $checksum)
 		or error "Cannot execute insert statement: " . $dbh->errstr;
-#	while (my $ref = $insert->fetchrow_hashref()) {
-#		print "Found a row: id = $ref->{'id'}, name = $ref->{'name'}\n";
-#	}
 	$insert->finish();
 }
 
@@ -67,7 +65,6 @@ sub check_file ($$)
 	init() unless defined $select;
 
 	my ($file, $checksum) = @_;
-	debug "check_file $file, $checksum";
 	$select->execute($checksum)
 		or error "Cannot execute select statement: " . $dbh->errstr;
 	my @results;
@@ -77,6 +74,16 @@ sub check_file ($$)
 	}
 	$select->finish();
 	return @results;
+}
+
+sub remove_file ($)
+{
+	init() unless defined $delete;
+
+	my $file = shift;
+	$delete->execute($file)
+		or error "Cannot execute delete statement: " . $dbh->errstr;
+	$delete->finish();
 }
 
 sub open_db ()
@@ -118,6 +125,11 @@ sub create_statements ()
 		insert into fileinfo (filename, checksum) values (?, ?)
 	")
 		or error "Cannot create insert statement: " . $dbh->errstr;
+	debug "Creating delete statement";
+	$delete = $dbh->prepare("
+		delete from fileinfo where filename = ?
+	")
+		or error "Cannot create delete statement: " . $dbh->errstr;
 }
 
 sub init ()
