@@ -193,6 +193,8 @@ sub save_message ($$$$$$$)
 {
 	my ($basedir, $projnum, $dir, $msg, $level, $subject, $smart_drop) = @_;
 
+	debug "smart_drop mode invoked" if $smart_drop;
+
 	# TODO: Add processing of stats here
 
 	# save the message headers to disk
