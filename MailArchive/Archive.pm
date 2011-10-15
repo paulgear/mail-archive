@@ -245,13 +245,6 @@ sub process_email ($$$$$)
 		}
 	}
 
-	# check for any messages to drop
-	my $check_drop = get_drop_flags($subject, $from, $to);
-	if (defined $check_drop) {
-		debug "Dropping email: $check_drop";
-		exit 0;
-	}
-
 	# work out whether the message is incoming or outgoing
 	my @fromaddr = Email::Address->parse($from);
 	dump_email_address "fromaddr", $fromaddr[0];

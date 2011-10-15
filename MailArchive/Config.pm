@@ -45,7 +45,6 @@ our %config = (
 	'dbconnect'		=> 'DBI:mysql:database=mailarchive',
 	'dbpass'		=> 'mailarchive',
 	'dbuser'		=> 'mailarchive',
-	'drop-subject-regex'	=> '[[)]?\bPERSONAL\b[\])]?',
 	'error-subject'		=> 'Mail Archive Error',
 	'localdomains'		=> [ 'localhost' ],
 	'projnum-regex'		=> '\b(FN\d{6})\b',

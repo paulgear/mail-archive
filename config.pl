@@ -12,10 +12,6 @@ $config{'dbconnect'}		= 'DBI:mysql:database=mailarchive';
 $config{'dbuser'}		= 'mailarchive';
 $config{'dbpass'}		= 'mailarchive';
 
-# Regular expression to match subjects which should cause the email to be
-# dropped instead of archived.
-$config{'drop-subject-regex'}	= '[[(]\b(PERSONAL|MESSAGE|GENERAL)\b[)\]]';
-
 # Mail from one of these domains is considered outgoing
 $config{'localdomains'}		= [ 'localhost' ];
 
