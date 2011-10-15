@@ -232,6 +232,7 @@ sub process_email ($$$$$)
 	debug "subject = $subject";
 
 	# put in a subject override if necessary
+	my $origsubject = $subject;
 	if (getconfig('subject-override') && defined $subject_override) {
 		unless ($subject_override =~ /^\s*$/) {
 			$subject = $subject_override;
@@ -302,7 +303,7 @@ sub process_email ($$$$$)
 		# save the parts (if split turned on)
 		save_message($basedir, $projnum, $uniquedir, $msg, 1, $subject, 0) if getconfig('split');
 		# save the whole file
-		save_dedup_file("$uniquedir/$subject.eml", "email archive file", $email);
+		save_dedup_file("$uniquedir/$origsubject.eml", "email archive file", $email);
 	}
 }
 
