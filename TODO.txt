@@ -21,6 +21,10 @@ Things still to be done, ideas for improvement:
 
 - Create a complete test suite.
 
+- Track which message ids are used for which projects.  If we see a reply to a
+  message which is associated with a project and the project number is not
+  specified, use that message's project as the project number of the reply.
+
 - Save statistics for emails:
 	senders (domain & user)
 	recipients (domain & user)
