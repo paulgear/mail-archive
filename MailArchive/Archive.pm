@@ -139,11 +139,11 @@ sub limit_recursion ($)
 
 # prototypes for recursive functions
 sub process_email ($$$$$);
-sub process_part ($$$$$$$$);
+sub process_part ($$$$$$$$$);
 
-sub process_part ($$$$$$$$)
+sub process_part ($$$$$$$$$)
 {
-	my ($basedir, $projnum, $dir, $part, $level, $prefix, $partnum, $subject) = @_;
+	my ($basedir, $projnum, $dir, $part, $level, $prefix, $partnum, $subject, $smart_drop) = @_;
 
 	limit_recursion($level);
 
@@ -157,7 +157,7 @@ sub process_part ($$$$$$$$)
 		my $subpartnum = 1;
 		for my $subpart ($part->subparts) {
 			process_part($basedir, $projnum, $dir, $subpart, $level + 1,
-				"$prefix$partnum.", $subpartnum, $subject);
+				"$prefix$partnum.", $subpartnum, $subject, $smart_drop);
 		}
 	}
 	# TODO: work out whether there can be a body on a part with multiple subparts
@@ -168,7 +168,12 @@ sub process_part ($$$$$$$$)
 	else {
 		# save part if it's an attachment
 		if (defined $part->filename or defined $part->header('Content-Disposition')) {
-			save_part($dir, $filename, $part->body);
+			if ($smart_drop) {
+				debug "Ignoring attachment due to smart-drop";
+			}
+			else {
+				save_part($dir, $filename, $part->body);
+			}
 		}
 		else {
 			debug "part $prefix$partnum is not an attachment - skipping";
@@ -177,9 +182,9 @@ sub process_part ($$$$$$$$)
 }
 
 # save every part of the given message
-sub save_message ($$$$$$)
+sub save_message ($$$$$$$)
 {
-	my ($basedir, $projnum, $dir, $msg, $level, $subject) = @_;
+	my ($basedir, $projnum, $dir, $msg, $level, $subject, $smart_drop) = @_;
 
 	# TODO: Add processing of stats here
 
@@ -194,27 +199,7 @@ sub save_message ($$$$$$)
 	# iterate through each message part
 	my $partnum = 1;
 	for my $part ($msg->parts) {
-		process_part($basedir, $projnum, $dir, $part, $level, "", $partnum++, $subject);
-	}
-}
-
-# remove all files in the given directory which have more than 1 hard link
-sub remove_dedup_files ($)
-{
-	for my $file (bsd_glob "$_[0]/*") {
-		debug "Checking $file";
-		next unless -e $file;
-		$file =~ /^(.*)$/;	# untaint
-		$file = $1;
-		my @stat = stat($file);
-		if ($stat[3] > 1) {
-			debug "Removing file $file";
-			debug "Cannot remove $file: $!"
-				unless unlink($file) == 1;
-		}
-		else {
-			debug "Not removing $file";
-		}
+		process_part($basedir, $projnum, $dir, $part, $level, "", $partnum++, $subject, $smart_drop);
 	}
 }
 
@@ -298,23 +283,16 @@ sub process_email ($$$$$)
 	debug "uniquebase = ($uniquebase)";
 	my $uniquedir = create_seq_directory($uniquebase);
 
-	if (getconfig('split')) {
-		# split into parts and process the message
-		save_message($basedir, $projnum, $uniquedir, $msg, 1, $subject);
-	}
-
-	# save the whole file unless it's copied to the archiver
-	if (getconfig('smart-drop')) {
-		if ($outgoing && $toaddr[0]->address eq getconfig('archiver-email')) {
-			remove_dedup_files($uniquedir);
-			debug "Removing directory $uniquedir";
-			debug "$uniquedir not removed: $!" unless rmdir $uniquedir;
-		}
-		else {
-			save_dedup_file("$uniquedir/$subject.eml", "email archive file", $email);
-		}
+	if (getconfig('smart-drop') && $outgoing && $toaddr[0]->address eq getconfig('archiver-email') && getconfig('split')) {
+		# do not save the whole email or the attachments if it's a smart drop - only process attached emails
+		save_message($basedir, $projnum, $uniquedir, $msg, 1, $subject, 1);
+		debug "Removing directory $uniquedir";
+		debug "$uniquedir not removed: $!" unless rmdir $uniquedir;
 	}
 	else {
+		# save the parts (if split turned on)
+		save_message($basedir, $projnum, $uniquedir, $msg, 1, $subject, 0) if getconfig('split');
+		# save the whole file
 		save_dedup_file("$uniquedir/$subject.eml", "email archive file", $email);
 	}
 }
