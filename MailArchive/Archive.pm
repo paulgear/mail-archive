@@ -257,6 +257,7 @@ sub process_email ($$$$$)
 
 	# remove noise from subject
 	$subject = clean_subject($subject, $projnum);
+	$origsubject = clean_subject($origsubject, $projnum);
 
 	# search for project directory
 	my $projdir = get_project_dir($basedir, $projnum);
