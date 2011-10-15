@@ -304,7 +304,7 @@ sub process_email ($$$$$)
 	}
 
 	# save the whole file unless it's copied to the archiver
-	if (getconfig('smart-outgoing')) {
+	if (getconfig('smart-drop')) {
 		if ($outgoing && $toaddr[0]->address eq getconfig('archiver-email')) {
 			remove_dedup_files($uniquedir);
 			debug "Removing directory $uniquedir";

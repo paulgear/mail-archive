@@ -36,7 +36,7 @@ $config{'searchpath'}		= [ '/', '/files' ];
 
 # Flag: whether we should skip saving the whole email if it's sent directly to
 # the archiver from a local address.
-$config{'smart-outgoing'}	= 0;
+$config{'smart-drop'}		= 0;
 
 # Flag: whether we should split the email into parts - default true.
 # Only useful for debugging.
