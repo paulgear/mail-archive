@@ -40,7 +40,6 @@ $VERSION     = 1.00;
 # code dependencies
 use Digest;
 use File::Compare;
-use File::Glob ':glob';
 use File::Spec;
 use Scalar::Util qw/tainted/;
 
