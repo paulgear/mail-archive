@@ -58,6 +58,7 @@ sub clean_subject ($$)
 	$subject =~ s/((Emailing|FW|Fwd|Re|RE): ?)*//g;	# delete MUA noise
 	$subject =~ s/($projnum\s*)*//g;		# delete references to the project number
 	$subject =~ s/[\\<>*|?:]+//g;			# delete samba reserved characters
+	$subject =~ s/\// /g;				# replace / with space
 	$subject =~ s/\s+/ /g;				# compress whitespace
 	$subject =~ s/^\s*//g;				# delete leading whitespace
 	$subject =~ s/\s*$//g;				# delete trailing whitespace
