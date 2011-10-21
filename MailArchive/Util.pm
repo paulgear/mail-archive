@@ -32,11 +32,11 @@ $VERSION     = 1.00;
 @EXPORT      = qw(
 
 	create_seq_directory
+	datestring
 	is_whitespace
 	read_stdin
 	save_file
 	validate_directory
-	yyyymmdd
 
 );
 #@EXPORT_OK   = qw(mysub1);
@@ -117,16 +117,17 @@ sub validate_directory ($)
 	return $dir;
 }
 
-# get current (or supplied) date in yyyymmdd format
-sub yyyymmdd
+# get current (or supplied) date in yymmdd format
+sub datestring
 {
 	my $time = shift;
 	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
 		localtime(defined $time ? $time : time());
-	$year += 1900;		# year is 1900-based
+	$year += 1900;		# year is 1900-based - convert to real year
+	$year %= 100;		# truncate year to 2 digits
 	$mon  += 1;		# month is 0-based
-	my $yyyymmdd = sprintf("%04d%02d%02d", $year, $mon, $mday);
-	return $yyyymmdd;
+	my $result = sprintf("%02d%02d%02d", $year, $mon, $mday);
+	return $result;
 }
 
 1;	# file must return true - do not remove this line

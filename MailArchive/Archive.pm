@@ -286,8 +286,8 @@ sub process_email ($$$$$)
 
 	# use the date, subject, and otherparty to create a unique directory name within the
 	# correspondence directory
-	my $yyyymmdd = defined $received ? yyyymmdd($received) : yyyymmdd();
-	my $uniquefile = "$yyyymmdd $otherparty $subject";
+	my $datestring = defined $received ? datestring($received) : datestring();
+	my $uniquefile = "$datestring $otherparty $subject";
 	my $uniquebase = "$emaildir/$uniquefile";
 	$uniquebase =~ s/\s+/ /g;		# compress whitespace
 	debug "uniquebase = ($uniquebase)";
