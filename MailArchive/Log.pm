@@ -35,6 +35,7 @@ $VERSION     = 1.00;
 	error
 	getdebug
 	setdebug
+	warning
 
 );
 @EXPORT_OK   = qw(init);
@@ -75,6 +76,12 @@ sub debug ($)
 {
 	print "$PROG: $_[0]\n" if $DEBUG;
 	syslog LOG_INFO, "%s", $_[0];
+}
+
+sub warning ($)
+{
+	print "$PROG: WARNING: $_[0]\n";
+	syslog LOG_WARNING, "%s", $_[0];
 }
 
 sub error ($)
