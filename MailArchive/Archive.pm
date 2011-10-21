@@ -297,7 +297,7 @@ sub process_email ($$$$$)
 	my $uniquedir = create_seq_directory($uniquebase);
 
 	# check the length of the path
-	my $len = path_too_long($uniquedir);
+	$len = path_too_long($uniquedir);
 	if ($len) {
 		error "Path to directory ($uniquedir) too long";
 	}
