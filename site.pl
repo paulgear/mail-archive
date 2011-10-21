@@ -75,7 +75,8 @@ sub get_project_dir ($$)
 	# so that the most exact matches get priority.
 	for my $num ($projnum, $nnnnnn, $nnnn) {
 		for my $path (@searchpath) {
-			$path =~ s/\/*$//;			# remove any trailing /
+			$path =~ s/^\/*//;			# remove leading /
+			$path =~ s/\/*$//;			# remove trailing /
 			for my $subdir (@subdirs) {
 				my @dirs = glob "$basedir/$path/$subdir/${num}*";
 				if ($#dirs >= 0 && -d $dirs[0]) {
