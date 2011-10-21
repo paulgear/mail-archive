@@ -34,6 +34,7 @@ $VERSION     = 1.00;
 	create_seq_directory
 	datestring
 	is_whitespace
+	path_too_long
 	read_stdin
 	save_file
 	validate_directory
@@ -84,6 +85,19 @@ sub is_whitespace ($)
 {
 	return 1 unless defined $_[0];
 	return $_[0] =~ /^([[:space:]]|\R)*$/s;
+}
+
+# if the path is too long to be a valid Windows path, return the length, otherwise return 0
+sub path_too_long ($)
+{
+	my $len = length($_[0]);
+	if ($len > 250) {
+		warning "Path too long ($len characters): $_[0]";
+		return $len;
+	}
+	else {
+		return 0;
+	}
 }
 
 # read all of standard input into a single scalar and return it

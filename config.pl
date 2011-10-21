@@ -35,7 +35,7 @@ $config{'recursion-level'}	= 99;
 $config{'searchpath'}		= [ '/', '/files' ];
 
 # Flag: whether we should skip saving the whole email if it's sent directly to
-# the archiver from a local address.
+# the archiver from a local address.  Requires split = 1.
 $config{'smart-drop'}		= 0;
 
 # Flag: whether we should split the email into parts - default true.

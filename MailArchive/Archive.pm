@@ -115,6 +115,7 @@ sub dedup_file ($$)
 sub save_dedup_file ($$$)
 {
 	my ($file, $msg, $content) = @_;
+	# FIXME: check path length here and push the error back up the stack
 	save_file($file, $msg, $content);
 	dedup_file($file, $content);
 }
@@ -270,9 +271,16 @@ sub process_email ($$$$$)
 	my $emaildir = get_project_email_dir($projdir, $outgoing);
 	debug "emaildir = $emaildir";
 
+	# check the length of the path
+	my $len = path_too_long($emaildir);
+	if ($len) {
+		error "Path to email directory ($emaildir) too long";
+	}
+
 	# use the other party as an identifier
 	my @otherparty = $outgoing ? @toaddr : @fromaddr;
 	dump_email_addresses "otherparty", @otherparty;
+	# Use real name if it's present, otherwise use the user part of the email address
 	my $otherparty = join(",", map {defined $_->name ? $_->name : $_->user} @otherparty);
 	debug "otherparty = $otherparty";
 
@@ -287,6 +295,12 @@ sub process_email ($$$$$)
 	my $uniquebase = "$emaildir/$uniquefile";
 	debug "uniquebase = ($uniquebase)";
 	my $uniquedir = create_seq_directory($uniquebase);
+
+	# check the length of the path
+	my $len = path_too_long($uniquedir);
+	if ($len) {
+		error "Path to directory ($uniquedir) too long";
+	}
 
 	if (getconfig('smart-drop') && $outgoing && $toaddr[0]->address eq getconfig('archiver-email') && getconfig('split')) {
 		# do not save the whole email or the attachments if it's a smart drop - only process attached emails
