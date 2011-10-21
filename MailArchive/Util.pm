@@ -50,15 +50,15 @@ use Scalar::Util qw/tainted/;
 use MailArchive::Config;
 use MailArchive::Log;
 
-# Given a base and a maximum sequence number (default 999),
+# Given a base and a maximum sequence number (default 99),
 # find the first unused name in the sequence.
 sub check_seq_file_or_dir
 {
 	my $base = shift;
 	my $seq = shift;
-	$seq = 999 unless defined $seq;
+	$seq = 99 unless defined $seq;
 	for (my $i = 1; $i <= $seq; ++$i) {
-		my $num = sprintf "%04d", $i;
+		my $num = sprintf "%02d", $i;
 		my $f = "$base $num";
 		next if -d $f;
 		#next if -e "$f.eml";
