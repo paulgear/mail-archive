@@ -241,7 +241,7 @@ sub process_email ($$$$$)
 
 	# work out whether the message is incoming or outgoing
 	my @fromaddr = Email::Address->parse($from);
-	dump_email_address "fromaddr", $fromaddr[0];
+	dump_email_addresses "fromaddr", @fromaddr;
 	my $outgoing = is_local(@fromaddr);
 	debug "outgoing = $outgoing";
 
@@ -271,13 +271,9 @@ sub process_email ($$$$$)
 	debug "emaildir = $emaildir";
 
 	# use the other party as an identifier
-	my $otherparty;
-	if ($outgoing) {
-		$otherparty = join(" ", map {$_->name, $_->address} @toaddr);
-	}
-	else {
-		$otherparty = $fromaddr[0]->name . " " . $fromaddr[0]->address;
-	}
+	my @otherparty = $outgoing ? @toaddr : @fromaddr;
+	dump_email_addresses "otherparty", @otherparty;
+	my $otherparty = join(",", map {defined $_->name ? $_->name : $_->user} @otherparty);
 	debug "otherparty = $otherparty";
 
 	# try to get the exact date of when we received the email
@@ -287,9 +283,8 @@ sub process_email ($$$$$)
 	# use the date, subject, and otherparty to create a unique directory name within the
 	# correspondence directory
 	my $datestring = defined $received ? datestring($received) : datestring();
-	my $uniquefile = "$datestring $otherparty $subject";
+	my $uniquefile = "$datestring ($otherparty) $subject";
 	my $uniquebase = "$emaildir/$uniquefile";
-	$uniquebase =~ s/\s+/ /g;		# compress whitespace
 	debug "uniquebase = ($uniquebase)";
 	my $uniquedir = create_seq_directory($uniquebase);
 
