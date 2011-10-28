@@ -60,8 +60,8 @@ sub clean_subject ($$)
 	$subject =~ s/[\\<>*|?:]+//g;			# delete samba reserved characters
 	$subject =~ s/\// /g;				# replace / with space
 	$subject =~ s/\s+/ /g;				# compress whitespace
-	$subject =~ s/^\s*//g;				# delete leading whitespace
-	$subject =~ s/\s*$//g;				# delete trailing whitespace
+	$subject =~ s/^\s+//g;				# delete leading whitespace
+	$subject =~ s/\s+$//g;				# delete trailing whitespace
 	$subject = "NO SUBJECT" if $subject =~ /^$/;	# add a subject if none exists
 	debug "subject (post-clean) = $subject";
 	return $subject;
