@@ -268,6 +268,8 @@ sub process_email ($$$$$)
 			# Drop the message so that recipients aren't spammed for messages
 			# outside their control.  Incoming messages may be flagged separately
 			# via a procmail or mailfilter rule.
+			debug "Dropping incoming message with no project number";
+			exit 0;
 		}
 	}
 
