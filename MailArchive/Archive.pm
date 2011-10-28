@@ -250,9 +250,14 @@ sub process_email ($$$$$)
 	# get primary recpient
 	my @toaddr = Email::Address->parse($to);
 	dump_email_addresses "toaddr", @toaddr;
+
+	# get Cc recipients
 	my @ccaddr = Email::Address->parse($cc);
 	dump_email_addresses "ccaddr", @ccaddr;
-	push @toaddr, @ccaddr if $#ccaddr > -1;
+	if ($#ccaddr > -1) {
+		debug "Found Cc: header - adding to recipients"
+		push @toaddr, @ccaddr;
+	}
 
 	# validate project number
 	$projnum = check_project_num(defined $projnum ? $projnum : $subject);
