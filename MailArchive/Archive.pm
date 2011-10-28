@@ -255,8 +255,10 @@ sub process_email ($$$$$)
 	my @ccaddr = Email::Address->parse($cc);
 	dump_email_addresses "ccaddr", @ccaddr;
 	if ($#ccaddr > -1) {
-		debug "Found Cc: header - adding to recipients";
-		push @toaddr, @ccaddr;
+		debug "Found Cc: header - checking for local recipients";
+		my @localcc = grep { is_local($_) } @ccaddr;
+		dump_email_addresses "localcc", @localcc;
+		push @toaddr, @localcc;
 	}
 
 	# validate project number
