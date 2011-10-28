@@ -227,6 +227,7 @@ sub process_email ($$$$$)
 	my $subject = $msg->header("Subject");
 	my $from = $msg->header("From");
 	my $to = $msg->header("To");
+	my $cc = $msg->header("Cc");
 
 	# Show subject
 	debug "subject = $subject";
@@ -249,6 +250,9 @@ sub process_email ($$$$$)
 	# get primary recpient
 	my @toaddr = Email::Address->parse($to);
 	dump_email_addresses "toaddr", @toaddr;
+	my @ccaddr = Email::Address->parse($cc);
+	dump_email_addresses "ccaddr", @ccaddr;
+	push @toaddr, @ccaddr if $#ccaddr > -1;
 
 	# validate project number
 	$projnum = check_project_num(defined $projnum ? $projnum : $subject);
