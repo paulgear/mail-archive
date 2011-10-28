@@ -255,7 +255,7 @@ sub process_email ($$$$$)
 	my @ccaddr = Email::Address->parse($cc);
 	dump_email_addresses "ccaddr", @ccaddr;
 	if ($#ccaddr > -1) {
-		debug "Found Cc: header - adding to recipients"
+		debug "Found Cc: header - adding to recipients";
 		push @toaddr, @ccaddr;
 	}
 
