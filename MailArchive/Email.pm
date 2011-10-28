@@ -229,7 +229,7 @@ on delivery to other recipients of the original message.)
 		else {
 			# otherwise, send to the admin
 			debug "sending bounce to admin";
-			$reply->header_set( getconfig('admin-email') );
+			$reply->header_set( To => getconfig('admin-email') );
 		}
 	}
 	send_error_email($reply, $diag);
