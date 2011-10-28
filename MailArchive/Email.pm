@@ -222,11 +222,13 @@ on delivery to other recipients of the original message.)
 		my @tolist = grep { is_local($_) } @toaddr;
 		debug "toaddr (filtered) = @tolist";
 		if ($#tolist > -1) {
+			debug "sending bounce to @tolist";
 			# we have local recipients to use
 			$reply->header_set( To => @tolist );
 		}
 		else {
 			# otherwise, send to the admin
+			debug "sending bounce to admin";
 			$reply->header_set( getconfig('admin-email') );
 		}
 	}
