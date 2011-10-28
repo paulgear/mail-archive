@@ -247,24 +247,29 @@ sub process_email ($$$$$)
 	my $outgoing = is_local(@fromaddr);
 	debug "outgoing = $outgoing";
 
-	# get primary recpient
+	# get To: recpients
 	my @toaddr = Email::Address->parse($to);
 	dump_email_addresses "toaddr", @toaddr;
 
-	# get Cc recipients
+	# get Cc: recipients
 	my @ccaddr = Email::Address->parse($cc);
 	dump_email_addresses "ccaddr", @ccaddr;
-	if ($#ccaddr > -1) {
-		debug "Found Cc: header - checking for local recipients";
-		my @localcc = grep { is_local($_) } @ccaddr;
-		dump_email_addresses "localcc", @localcc;
-		push @toaddr, @localcc;
-	}
+
+	# recipients are the combination of To & Cc
+	push @toaddr, @ccaddr;
 
 	# validate project number
 	$projnum = check_project_num(defined $projnum ? $projnum : $subject);
-	send_error($msg, "Project number not found in message", $outgoing, \@toaddr)
-		unless (defined $projnum);
+	unless (defined $projnum) {
+		if ($outgoing) {
+			send_error($msg, "Project number not found in message", \@toaddr);
+		}
+		else {
+			# Drop the message so that recipients aren't spammed for messages
+			# outside their control.  Incoming messages may be flagged separately
+			# via a procmail or mailfilter rule.
+		}
+	}
 
 	# remove noise from subject
 	$subject = clean_subject($subject, $projnum);
@@ -272,7 +277,7 @@ sub process_email ($$$$$)
 
 	# search for project directory
 	my $projdir = get_project_dir($basedir, $projnum);
-	send_error($msg, "Project directory for $projnum not found", $outgoing, \@toaddr)
+	send_error($msg, "Project directory for $projnum not found", \@toaddr)
 		unless (defined $projdir);
 	error("Project directory $projdir tainted")
 		if tainted($projdir);

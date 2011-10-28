@@ -188,12 +188,11 @@ sub get_local_received_date (@)
 }
 
 # send a reply to the given email
-sub send_error ($$$$)
+sub send_error ($$$)
 {
 	my $msg = shift;		# the email message to bounce
 	my $diag = shift;		# message to send as a diagnostic
-	my $outgoing = shift;		# whether the message is outgoing
-	my $toaddr = shift;		# array of recipients
+	my $origto = shift;		# original message recipients
 
 	debug "Replying with: $diag";
 	my $footer = "
@@ -210,29 +209,34 @@ on delivery to other recipients of the original message.)
 		body		=> "$diag\n$footer\n",
 	);
 
-	# If it's an outgoing message, to address should already be correct.
-	# If it's an incoming message, check the original address against the
-	# list of local domains - if it matches, set the original recipient
-	# to be the recipient of this notification, otherwise, use the admin
-	# address.
-	unless ($outgoing) {
-		debug "Message is incoming - filtering reply recipients";
-		my $to = $msg->header('To');
-		my @toaddr = defined $toaddr ? @$toaddr : Email::Address->parse($to);
-		debug "toaddr = @toaddr";
-		my @tolist = grep { is_local($_) } @toaddr;
-		debug "toaddr (filtered) = @tolist";
-		if ($#tolist > -1) {
-			debug "sending bounce to @tolist";
-			# we have local recipients to use
-			$reply->header_set( To => @tolist );
-		}
-		else {
-			# otherwise, send to the admin
-			debug "sending bounce to admin";
-			$reply->header_set( To => getconfig('admin-email') );
-		}
+	# Prevent all non-local addresses from receiving this reply.
+	debug "checking reply recipients";
+	my $to = $reply->header('To');
+	my @to = Email::Address->parse($to);
+	debug "reply to = @to";
+
+	# remove non-local addresses from each list
+	my @tolist = grep { is_local($_) } @to;
+	debug "reply to (filtered) = @tolist";
+	my @origtolist = grep { is_local($_) } @$origto;
+	debug "orig to (filtered) = @origtolist";
+
+	# Use the reply's To address, or the original message's To addresses, and if no
+	# local addresses can be found in either list, use the admin address as the error
+	# recipient.
+	my @replyto;
+	if ($#tolist > -1) {
+		@replyto = @tolist;
 	}
+	elsif ($#origtolist > -1) {
+		@replyto = @origtolist;
+	}
+	else {
+		@replyto = getconfig('admin-email');
+	}
+
+	debug "sending bounce to @replyto";
+	$reply->header_set( To => @replyto );
 	send_error_email($reply, $diag);
 }
 
