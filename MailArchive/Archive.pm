@@ -263,7 +263,7 @@ sub process_email ($$$$$)
 
 	# validate project number
 	$projnum = check_project_num(defined $projnum ? $projnum : $subject);
-	send_error($msg, "Project number not found in message", $outgoing)
+	send_error($msg, "Project number not found in message", $outgoing, \@toaddr)
 		unless (defined $projnum);
 
 	# remove noise from subject
@@ -272,7 +272,7 @@ sub process_email ($$$$$)
 
 	# search for project directory
 	my $projdir = get_project_dir($basedir, $projnum);
-	send_error($msg, "Project directory for $projnum not found", $outgoing)
+	send_error($msg, "Project directory for $projnum not found", $outgoing, \@toaddr)
 		unless (defined $projdir);
 	error("Project directory $projdir tainted")
 		if tainted($projdir);

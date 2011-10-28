@@ -188,11 +188,12 @@ sub get_local_received_date (@)
 }
 
 # send a reply to the given email
-sub send_error ($$$)
+sub send_error ($$$$)
 {
 	my $msg = shift;		# the email message to bounce
 	my $diag = shift;		# message to send as a diagnostic
 	my $outgoing = shift;		# whether the message is outgoing
+	my $toaddr = shift;		# array of recipients
 
 	debug "Replying with: $diag";
 	my $footer = "
@@ -217,7 +218,7 @@ on delivery to other recipients of the original message.)
 	unless ($outgoing) {
 		debug "Message is incoming - filtering reply recipients";
 		my $to = $msg->header('To');
-		my @toaddr = Email::Address->parse($to);
+		my @toaddr = defined $toaddr ? @$toaddr : Email::Address->parse($to);
 		debug "toaddr = @toaddr";
 		my @tolist = grep { is_local($_) } @toaddr;
 		debug "toaddr (filtered) = @tolist";
