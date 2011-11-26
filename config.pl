@@ -12,14 +12,11 @@ $config{'dbconnect'}		= 'DBI:mysql:database=mailarchive';
 $config{'dbuser'}		= 'mailarchive';
 $config{'dbpass'}		= 'mailarchive';
 
-# Mail from one of these domains is considered outgoing
-$config{'localdomains'}		= [ 'localhost' ];
-
 # Subject of emails from mail-archive
 $config{'error-subject'}	= 'Mail Archive Error';
 
-# Header used to identify status emails from mail-archive
-$config{'status-header'}	= 'X-MailArchive-Status';
+# Mail from one of these domains is considered outgoing
+$config{'localdomains'}		= [ 'localhost' ];
 
 # Regular expression to match project numbers - must contain () to provide $1
 $config{'projnum-regex'}	= '\b(FN\d{6})\b';
@@ -41,6 +38,9 @@ $config{'smart-drop'}		= 0;
 # Flag: whether we should split the email into parts - default true.
 # Only useful for debugging.
 $config{'split'}		= 1;
+
+# Header used to identify status emails from mail-archive
+$config{'status-header'}	= 'X-MailArchive-Status';
 
 # Flag: whether we should override the subject of attached emails with the outer email's subject
 # - defaults to true
