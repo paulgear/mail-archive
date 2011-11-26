@@ -18,6 +18,9 @@ $config{'error-subject'}	= 'Mail Archive Error';
 # Mail from one of these domains is considered outgoing
 $config{'localdomains'}		= [ 'localhost' ];
 
+# Maximum length of a file path
+$config{'maxpath'}		= 255;
+
 # Regular expression to match project numbers - must contain () to provide $1
 $config{'projnum-regex'}	= '\b(FN\d{6})\b';
 

@@ -47,6 +47,7 @@ our %config = (
 	'dbuser'		=> 'mailarchive',
 	'error-subject'		=> 'Mail Archive Error',
 	'localdomains'		=> [ 'localhost' ],
+	'maxpath'		=> 255,
 	'projnum-regex'		=> '\b(FN\d{6})\b',
 	'projnum-split-regex'	=> '^FN(\d\d)(\d\d)(\d\d)$',
 	'recursion-level'	=> 99,
@@ -63,11 +64,12 @@ require "config.pl";
 
 sub getconfig ($)
 {
-	return $config{$_[0]};
+	return defined $_[0] ? $config{$_[0]} : undef;
 }
 
 sub setconfig ($$)
 {
+	return unless defined $_[0];
 	$config{$_[0]} = $_[1];
 }
 

@@ -37,6 +37,7 @@ $VERSION     = 1.00;
 	path_too_long
 	read_stdin
 	save_file
+	shorten_path
 	validate_directory
 
 );
@@ -44,6 +45,7 @@ $VERSION     = 1.00;
 #%EXPORT_TAGS = ( DEFAULT => [qw(&mysub2)] );
 
 # code dependencies
+use File::Basename;
 use File::Path;
 use File::Spec;
 use Scalar::Util qw/tainted/;
@@ -52,17 +54,23 @@ use MailArchive::Config;
 use MailArchive::Log;
 
 # Given a base and a maximum sequence number (default 99),
-# find the first unused name in the sequence.
-sub check_seq_file_or_dir
+# find the first unused directory name in the sequence.
+# Ensure the directory name used is sufficiently less than the overall
+# path length limit to enable files to be created within it.
+# Maximum path length is maxpath minus room for:
+#	1 space
+#	2 digit sequence number
+#	1 path separator
+#	14 character filename following
+sub check_seq_directory
 {
 	my $base = shift;
 	my $seq = shift;
 	$seq = 99 unless defined $seq;
+	my $maxlen = getconfig('maxpath') - 18;
 	for (my $i = 1; $i <= $seq; ++$i) {
-		my $num = sprintf "%02d", $i;
-		my $f = "$base $num";
+		my $f = sprintf "%.*s %02d", $maxlen, $base, $i;
 		next if -d $f;
-		#next if -e "$f.eml";
 		return $f;
 	}
 	return undef;
@@ -71,7 +79,7 @@ sub check_seq_file_or_dir
 # create a directory given a base name and working out a valid sequence number
 sub create_seq_directory
 {
-	my $dir = check_seq_file_or_dir(@_);
+	my $dir = check_seq_directory(@_);
 	if (defined $dir) {
 		mkpath $dir
 			or error "Cannot create directory $dir: $!";
@@ -88,11 +96,16 @@ sub is_whitespace ($)
 }
 
 # if the path is too long to be a valid Windows path, return the length, otherwise return 0
-sub path_too_long ($)
+sub path_too_long
 {
-	my $len = length($_[0]);
-	if ($len > 250) {
-		warning "Path too long ($len characters): $_[0]";
+	my $path = shift;
+	my $margin = shift;
+	my $max = getconfig('maxpath');
+	$margin = 0 unless defined $margin;
+	$margin = 0 if $margin < 0 or $margin > $max;
+	my $len = length($path);
+	if ($len + $margin > $max) {
+		#warning "Path too long ($len characters): $_[0]";
 		return $len;
 	}
 	else {
@@ -109,14 +122,62 @@ sub read_stdin ()
 }
 
 # save the given content to the file
-sub save_file ($$$)
+sub save_file ($$)
 {
-	my ($fname, $msg, $content) = @_;
+	my ($fname, $content) = @_;
 	open(my $fh, ">$fname")
 		or error "Cannot create file $fname: $!";
 	print $fh $content;
 	close $fh
 		or error "Cannot close $fname: $!";
+}
+
+# Cut off words in the file name until the total path length is short enough,
+# keeping the original extension.  Use simple truncation if other shortening
+# techniques fail.  Ensure the file name is unique.
+sub shorten_path ($)
+{
+	my $path = shift;
+	my $max = getconfig('maxpath');
+
+	# enforce length limit
+	for (my $len = length($path); $len > $max; $len = length($path)) {
+		# split path into dirname, basename, and extension
+		my ($base, $dir, $ext) = fileparse($path, qr/\.[^.]*/);
+		if ($base =~ /[[:punct:]\s]+/) {
+			# if there are still punctuation or space chars, eliminate the last word
+			$base =~ s/[[:punct:]\s]+[[:alpha:][:digit:]]+\s*$//;
+			$path = "$dir$base$ext";
+		}
+		else {
+			# otherwise, just truncate it
+			$base = substr($base, 0, $max - length($dir) - length($ext) - 5);
+			$path = "$dir$base$ext";
+			$len = length($path);
+			if ($len > $max) {
+				# we failed (because $dir or $ext was too long)
+				return undef;
+			}
+		}
+	}
+
+	# ensure file is unique
+	my $i = 1;
+	my ($base, $dir, $ext) = fileparse($path, qr/\.[^.]*/);
+	while (-e $path) {
+		# sleep a random amount in case we have multiple instances competing
+		sleep(rand($i));
+
+		# construct a new path using the sequence number
+		$path = sprintf "%s%s%s%04d%s", $dir, $base, $base eq "" ? "" : " ", $i, $ext;
+
+		++$i;
+		if ($i > 9999) {
+			# we failed to find a unique file
+			return undef;
+		}
+	}
+	return $path;
 }
 
 # ensure directory is a canonical path and it exists, returning the untainted name

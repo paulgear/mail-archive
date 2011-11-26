@@ -114,24 +114,23 @@ sub dedup_file ($$)
 # save the file and dedup
 sub save_dedup_file ($$$)
 {
-	my ($file, $msg, $content) = @_;
-	# FIXME: check path length here and push the error back up the stack
-	save_file($file, $msg, $content);
-	dedup_file($file, $content);
+	my ($dir, $file, $content) = @_;
+	my $fullpath = File::Spec->catfile($dir, $file);
+	$fullpath = shorten_path($fullpath);
+	save_file($fullpath, $content);
+	dedup_file($fullpath, $content);
 }
 
 # save the body of the given file part to disk
 sub save_part ($$$)
 {
-	my ($dir, $filename, $body) = @_;
+	my ($dir, $file, $body) = @_;
 	if (is_whitespace($body)) {
 		# don't save empty parts
-		debug "Message part $filename empty - dropping";
+		debug "Message part $file empty - dropping";
 		return;
 	}
-	my $fullpath = File::Spec->catfile($dir, $filename);
-	error "File $fullpath already exists" if -e $fullpath;
-	save_dedup_file($fullpath, "message part file", $body);
+	save_dedup_file($dir, $file, $body);
 }
 
 # exit with error if we've passed the maximum recursion limit
@@ -289,8 +288,10 @@ sub process_email ($$$$$)
 	my $emaildir = get_project_email_dir($projdir, $outgoing);
 	debug "emaildir = $emaildir";
 
-	# check the length of the path
-	my $len = path_too_long($emaildir);
+	# Check the length of the path - if it's too long, we can't
+	# shorten it so there's nothing we can do but exit.  Allow
+	# 40 characters' padding for directory & file names.
+	my $len = path_too_long($emaildir, 40);
 	if ($len) {
 		error "Path to email directory ($emaildir) too long";
 	}
@@ -314,12 +315,6 @@ sub process_email ($$$$$)
 	debug "uniquebase = ($uniquebase)";
 	my $uniquedir = create_seq_directory($uniquebase);
 
-	# check the length of the path
-	$len = path_too_long($uniquedir);
-	if ($len) {
-		error "Path to directory ($uniquedir) too long";
-	}
-
 	if (getconfig('smart-drop') && $outgoing && $toaddr[0]->address eq getconfig('archiver-email') && getconfig('split')) {
 		# do not save the whole email or the attachments if it's a smart drop - only process attached emails
 		save_message($basedir, $projnum, $uniquedir, $msg, 1, $subject, 1);
@@ -330,7 +325,7 @@ sub process_email ($$$$$)
 		# save the parts (if split turned on)
 		save_message($basedir, $projnum, $uniquedir, $msg, 1, $subject, 0) if getconfig('split');
 		# save the whole file
-		save_dedup_file("$uniquedir/$origsubject.eml", "email archive file", $email);
+		save_dedup_file($uniquedir, "$origsubject.eml", $email);
 	}
 }
 
