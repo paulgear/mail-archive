@@ -301,7 +301,7 @@ sub process_email ($$$$$)
 	dump_email_addresses "otherparty", @otherparty;
 
 	# exclude archiver itself from outgoing
-	@otherparty = grep { $_->email ne getconfig('archiver-email') } @otherparty;
+	@otherparty = grep { $_->address ne getconfig('archiver-email') } @otherparty;
 
 	# Convert @otherparty from Email::Address to string.
 	# Use real name if it's present, otherwise use the user part of the email address
