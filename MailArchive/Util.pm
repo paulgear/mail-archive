@@ -33,6 +33,7 @@ $VERSION     = 1.00;
 
 	create_seq_directory
 	datestring
+	dequote
 	is_whitespace
 	path_too_long
 	read_stdin
@@ -86,6 +87,17 @@ sub create_seq_directory
 		debug "made $dir";
 	}
 	return $dir;
+}
+
+# remove surrounding single or double quotes from the passed string
+sub dequote ($)
+{
+	my $ret = $_[0];
+	while ($ret =~ /^('.*'|".*")$/) {
+		$ret =~ s/^'(.*)'$/$1/g;
+		$ret =~ s/^"(.*)"$/$1/g;
+	}
+	return $ret;
 }
 
 # check whether the given string consists entirely of vertical or horizontal whitespace

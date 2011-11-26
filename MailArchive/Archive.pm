@@ -299,8 +299,20 @@ sub process_email ($$$$$)
 	# use the other party as an identifier
 	my @otherparty = $outgoing ? @toaddr : @fromaddr;
 	dump_email_addresses "otherparty", @otherparty;
+
+	# exclude archiver itself from outgoing
+	@otherparty = grep { $_->email ne getconfig('archiver-email') } @otherparty;
+
+	# Convert @otherparty from Email::Address to string.
 	# Use real name if it's present, otherwise use the user part of the email address
-	my $otherparty = join(",", map {defined $_->name ? $_->name : $_->user} @otherparty);
+	@otherparty = map { (defined $_->phrase && $_->phrase ne "") ? $_->phrase : $_->user } @otherparty;
+	debug "otherparty (shortened): @otherparty";
+
+	# remove quotes from names
+	@otherparty = map { dequote($_) } @otherparty;
+	debug "otherparty (no quotes): @otherparty";
+
+	my $otherparty = join ",", @otherparty;
 	debug "otherparty = $otherparty";
 
 	# try to get the exact date of when we received the email

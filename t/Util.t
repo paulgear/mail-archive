@@ -21,22 +21,13 @@
 #
 
 # module setup
-use Test::More tests => 45;
+use Test::More tests => 65;
 use strict;
 use warnings;
 
 use_ok( 'MailArchive::Util' );
 
 use File::Path;
-
-#	create_seq_directory
-#	datestring
-#	is_whitespace
-#	path_too_long
-#	read_stdin
-#	save_file
-#	shorten_path
-#	validate_directory
 
 # Given a base and a maximum sequence number (default 99),
 # find the first unused directory name in the sequence.
@@ -57,7 +48,6 @@ use File::Path;
 
 # get current (or supplied) date in yymmdd format
 print "datestring\n";
-
 my $result = `date +%y%m%d`;
 chomp($result);
 is( datestring(), $result, "Current time" );
@@ -66,22 +56,43 @@ is( datestring( 660956564 ), "901212", "12 Dec 1990" );
 is( datestring( 1321912328 ), "111122", "22 Nov 2011" );
 is( datestring( 2643824656 ), "531012", "12 October 2053" );
 
+# remove surrounding single or double quotes from the passed string
+print "dequote\n";
+is(dequote("Hello World"), "Hello World", "no quotes");
+is(dequote("Hello 'help me' World"), "Hello 'help me' World", "quotes in the middle");
+is(dequote("'Hello 'help me' World'"), "Hello 'help me' World", "nested quotes in the middle");
+is(dequote("'Hello World'"), "Hello World", "single quotes");
+is(dequote('"Hello World"'), "Hello World", "double quotes");
+is(dequote("'Hello World\""), "'Hello World\"", "mismatched quotes");
+is(dequote("'Hello World"), "'Hello World", "opening quote");
+is(dequote("Hello World'"), "Hello World'", "closing quote");
+is(dequote("''Hello World''"), "Hello World", "nested single quotes");
+is(dequote("'\"Hello World\"'"), "Hello World", "nested double quotes");
+is(dequote('"""Hello World"""'), "Hello World", "triple nested double quotes");
+is(dequote("'''Hello World'''"), "Hello World", "triple nested single quotes");
+is(dequote("''Hello World'"), "'Hello World", "nested opening quote");
+is(dequote("'Hello World''"), "Hello World'", "nested closing quote");
+is(dequote("Seamus O'Malley"), "Seamus O'Malley", "stereotypical Irish name");
+is(dequote("'Seamus O'Malley'"), "Seamus O'Malley", "stereotypical Irish name - single quotes");
+is(dequote('"Seamus O\'Malley"'), "Seamus O'Malley", "stereotypical Irish name - double quotes");
+is(dequote("John 'Truck' Smith"), "John 'Truck' Smith", "stereotypical footballer name");
+is(dequote("'John 'Truck' Smith'"), "John 'Truck' Smith", "stereotypical footballer name - single quotes");
+is(dequote('"John \'Truck\' Smith"'), "John 'Truck' Smith", "stereotypical footballer name - double quotes");
+
 # check whether the given string consists entirely of vertical or horizontal whitespace
 print "is_whitespace\n";
-
 ok( is_whitespace( "    " ), "four spaces" );
 ok( is_whitespace( "\t\t" ), "two tabs" );
 ok( is_whitespace( "\t    \t\n\t    \t\n" ), "multi-line whitespace" );
-
 ok( ! is_whitespace( "Hello world\n" ), "hello world" );
-ok( ! is_whitespace( "asdf" ), "asdf" );
+ok( ! is_whitespace( "helpme" ), "helpme" );
 ok( ! is_whitespace( "      \nHelp me!\n     \n" ), "multi-line including whitespace" );
 
 # if the path is too long to be a valid Windows path, return the length, otherwise return 0
 print "path_too_long\n";
 
 my $str;
-$str = "/asdf" x 51;
+$str = "/abcd" x 51;
 ok( ! path_too_long($str), length($str) . " char string" );
 ok( path_too_long($str, 1), length($str) . " char string with 1 char margin" );
 
@@ -110,8 +121,8 @@ ok( path_too_long($str, length($str)), length($str) . " char string with " . len
 print "setup for save_file and shorten_path\n";
 
 my $dir;
-my $base = "/tmp/asdfghjkl";
-$dir = $base . ("/asdfghjkl" x 22);
+my $base = "/tmp/abcdefghi";
+$dir = $base . ("/abcdefghi" x 22);
 mkpath $dir;
 
 # save the given content to the file
