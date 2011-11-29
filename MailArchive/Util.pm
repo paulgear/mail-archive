@@ -178,7 +178,7 @@ sub shorten_path ($)
 	my ($base, $dir, $ext) = fileparse($path, qr/\.[^.]*/);
 	while (-e $path) {
 		# sleep a random amount in case we have multiple instances competing
-		sleep(rand($i));
+		sleep(rand($i % 5));
 
 		# construct a new path using the sequence number
 		$path = sprintf "%s%s%s%04d%s", $dir, $base, $base eq "" ? "" : " ", $i, $ext;
