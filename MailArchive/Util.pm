@@ -163,7 +163,7 @@ sub shorten_path ($)
 		}
 		else {
 			# otherwise, just truncate it
-			$base = substr($base, 0, $max - length($dir) - length($ext) - 5);
+			$base = substr($base, 0, $max - length($dir) - length($ext) - 3);
 			$path = "$dir$base$ext";
 			$len = length($path);
 			if ($len > $max) {
@@ -181,10 +181,10 @@ sub shorten_path ($)
 		sleep(rand($i % 5));
 
 		# construct a new path using the sequence number
-		$path = sprintf "%s%s%s%04d%s", $dir, $base, $base eq "" ? "" : " ", $i, $ext;
+		$path = sprintf "%s%s%s%02d%s", $dir, $base, $base eq "" ? "" : " ", $i, $ext;
 
 		++$i;
-		if ($i > 9999) {
+		if ($i > 99) {
 			# we failed to find a unique file
 			return undef;
 		}
