@@ -83,7 +83,7 @@ sub dump_email_address ($$)
 {
 	my ($label, $address) = @_;
 	my @attrs = map { $address->$_ } qw(name user host);
-	printf STDERR "%s: %s <%s@%s>\n", $label, @attrs;
+	debug(sprintf "%s: %s <%s@%s>", $label, @attrs);
 	#my @attrs = qw(phrase address comment original host user format name);
 	#for my $attr (@attrs) {
 	#	printf STDERR "\t%-20s  %s\n", $attr, $address->$attr;
