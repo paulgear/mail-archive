@@ -44,12 +44,16 @@ $VERSION     = 1.00;
 
 # code dependencies
 use Date::Parse;
+use Email::MIME;
 use Email::Reply;
 use Email::Simple;
 
 use MailArchive::Config;
 use MailArchive::Error;
 use MailArchive::Log;
+
+# prototypes
+sub parse_date ($);
 
 sub clean_subject ($$)
 {
@@ -98,6 +102,20 @@ sub dump_email_addresses ($@)
 	}
 }
 
+# Given a list of received headers, return the earliest date the message was received by a
+# server in localdomains.
+sub get_local_received_date (@)
+{
+	my $list = received_hosts(@_);
+	return undef unless defined $list;
+	for my $entry (reverse @$list) {
+		next unless defined $entry;
+		debug sprintf("Received entry: %s %s\n", scalar localtime parse_date($entry->[1]),
+			$entry->[0]);
+		return parse_date($entry->[1]) if is_local_host($entry->[0]);
+	}
+	return undef;
+}
 
 # Return the date in the given Received: email header
 sub get_received_date ($)
@@ -145,6 +163,14 @@ sub is_local_host (@)
 	return 0;
 }
 
+# Parse the given date string and return it in standard Unix time format.
+# Return undef if the date cannot be parsed.
+sub parse_date ($)
+{
+	my $time = str2time($_[0]);
+	return defined $time ? $time : undef;
+}
+
 # Parse the given list of Received: email headers, returning a pointer to an array of pointers
 # to arrays containing the received host, the date of receipt (as a literal string from the
 # original header), and the original header itself.
@@ -162,29 +188,6 @@ sub received_hosts (@)
 		}
 	}
 	return $hosts;
-}
-
-# Parse the given date string and return it in standard Unix time format.
-# Return undef if the date cannot be parsed.
-sub parse_date ($)
-{
-	my $time = str2time($_[0]);
-	return defined $time ? $time : undef;
-}
-
-# Given a list of received headers, return the earliest date the message was received by a
-# server in localdomains.
-sub get_local_received_date (@)
-{
-	my $list = received_hosts(@_);
-	return undef unless defined $list;
-	for my $entry (reverse @$list) {
-		next unless defined $entry;
-		debug sprintf("Received entry: %s %s\n", scalar localtime parse_date($entry->[1]),
-			$entry->[0]);
-		return parse_date($entry->[1]) if is_local_host($entry->[0]);
-	}
-	return undef;
 }
 
 # send a reply to the given email
