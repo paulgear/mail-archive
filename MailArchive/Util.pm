@@ -36,6 +36,7 @@ $VERSION     = 1.00;
 	dequote
 	is_whitespace
 	path_too_long
+	read_file
 	read_stdin
 	save_file
 	shorten_path
@@ -123,6 +124,16 @@ sub path_too_long
 	else {
 		return 0;
 	}
+}
+
+# read all of the given file into a single scalar and return it
+sub read_file ($)
+{
+	open( my $in, $_[0] ) or return undef;
+	local $/ = undef;
+	my $ret = <$in>;
+	close $in;
+	return $ret;
 }
 
 # read all of standard input into a single scalar and return it
