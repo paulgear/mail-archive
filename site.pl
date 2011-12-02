@@ -114,4 +114,3 @@ sub get_project_email_dir ($$)
 }
 
 1;	# file must return true - do not remove this line
-

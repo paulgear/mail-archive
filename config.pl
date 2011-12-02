@@ -50,4 +50,3 @@ $config{'status-header'}	= 'X-MailArchive-Status';
 $config{'subject-override'}	= 1;
 
 1;	# file must return true - do not remove this line
-
