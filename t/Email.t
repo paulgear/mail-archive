@@ -56,6 +56,11 @@ use_ok( 'MailArchive::Email' );
 #sub dump_email_addresses ($@)
 #	my $label = shift;
 
+# Given a list of received headers, return the earliest date the message was received by a
+# server in localdomains.
+#sub get_local_received_date (@)
+#	my $list = received_hosts(@_);
+
 # Return the date in the given Received: email header
 #sub get_received_date ($)
 
@@ -72,20 +77,15 @@ use_ok( 'MailArchive::Email' );
 #sub is_local_host (@)
 #	for my $str (@_) {
 
-# Parse the given list of Received: email headers, returning a pointer to an array of pointers
-# to arrays containing the received host, the date of receipt (as a literal string from the
-# original header), and the original header itself.
-#sub received_hosts (@)
-
 # Parse the given date string and return it in standard Unix time format.
 # Return undef if the date cannot be parsed.
 #sub parse_date ($)
 #	my $time = str2time($_[0]);
 
-# Given a list of received headers, return the earliest date the message was received by a
-# server in localdomains.
-#sub get_local_received_date (@)
-#	my $list = received_hosts(@_);
+# Parse the given list of Received: email headers, returning a pointer to an array of pointers
+# to arrays containing the received host, the date of receipt (as a literal string from the
+# original header), and the original header itself.
+#sub received_hosts (@)
 
 # send a reply to the given email
 #sub send_error ($$$)
