@@ -214,12 +214,12 @@ sub save_message ($$$$$$$)
 # main email processor
 sub process_email ($$$$$)
 {
-	my ($basedir, $projnum, $email, $level, $subject_override) = @_;
+	my ($basedir, $projnum, $body, $level, $subject_override) = @_;
 
 	limit_recursion($level);
 
 	# open parsed version of the email
-	my $msg = Email::MIME->new($email);
+	my $msg = Email::MIME->new($body);
 
 	# get the message headers
 	my $header = $msg->header(getconfig('status-header'));
@@ -337,7 +337,7 @@ sub process_email ($$$$$)
 		# save the parts (if split turned on)
 		save_message($basedir, $projnum, $uniquedir, $msg, 1, $subject, 0) if getconfig('split');
 		# save the whole file
-		save_dedup_file($uniquedir, "$origsubject.eml", $email);
+		save_dedup_file($uniquedir, "$origsubject.eml", $body);
 	}
 }
 
