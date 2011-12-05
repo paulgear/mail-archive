@@ -133,16 +133,6 @@ sub save_part ($$$)
 	save_dedup_file($dir, $file, $body);
 }
 
-# exit with error if we've passed the maximum recursion limit
-sub limit_recursion ($)
-{
-	my $level = shift;
-	my $max = getconfig('recursion-level');
-	if ($level > $max) {
-		error "Reached maximum recursion level ($max) in message";
-	}
-}
-
 # prototypes for recursive functions
 sub process_email ($$$$$);
 sub process_part ($$$$$$$$$);

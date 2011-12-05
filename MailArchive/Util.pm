@@ -35,6 +35,7 @@ $VERSION     = 1.00;
 	datestring
 	dequote
 	is_whitespace
+	limit_recursion
 	path_too_long
 	read_file
 	read_stdin
@@ -106,6 +107,16 @@ sub is_whitespace ($)
 {
 	return 1 unless defined $_[0];
 	return $_[0] =~ /^([[:space:]]|\R)*$/s;
+}
+
+# exit with error if we've passed the maximum recursion limit
+sub limit_recursion ($)
+{
+	my $level = shift;
+	my $max = getconfig('recursion-level');
+	if ($level > $max) {
+		error "Reached maximum recursion level ($max) in message";
+	}
 }
 
 # if the path is too long to be a valid Windows path, return the length, otherwise return 0
