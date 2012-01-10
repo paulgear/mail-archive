@@ -250,8 +250,8 @@ sub process_email ($$$$$)
 		# do not save the whole email or the attachments - only process attached emails
 		@parts = grep { $_->{'part'}->content_type =~ /^message\// } @parts;
 		debug "Found " . ($#parts + 1) . " message parts";
-		@parts = grep { $_->{'level'} == 1 } @parts;
-		debug "Found " . ($#parts + 1) . " parts at level 1";
+		@parts = grep { $_->{'level'} == 0 } @parts;
+		debug "Found " . ($#parts + 1) . " parts at level 0";
 		for my $p (@parts) {
 			process_email($basedir, $projnum, $p->{'part'}->body_raw, $level + 1, $subject_override);
 		}
