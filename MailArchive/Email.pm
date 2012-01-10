@@ -282,8 +282,8 @@ sub received_hosts (@)
 	for my $r (@_) {
 		chomp $r;
 		#print "Received |$r|\n";
-		my $host = get_received_host $r;
-		my $date = get_received_date $r;
+		my $host = get_received_host($r);
+		my $date = get_received_date($r);
 		if ($date ne "") {
 			$hosts->[$i++] = [ $host, $date, $r ];
 		}
