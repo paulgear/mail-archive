@@ -248,7 +248,10 @@ sub process_email ($$$$$)
 	if (getconfig('smart-drop') && $outgoing && $toaddr[0]->address eq getconfig('archiver-email') && getconfig('split')) {
 		debug "Processing only attached emails";
 		# do not save the whole email or the attachments - only process attached emails
-		@parts = grep { $_->{'part'}->content_type =~ /^message\// && $_->{'level'} == 1 } @parts;
+		@parts = grep { $_->{'part'}->content_type =~ /^message\// } @parts;
+		debug "Found " . ($#parts + 1) . " message parts";
+		@parts = grep { $_->{'level'} == 1 } @parts;
+		debug "Found " . ($#parts + 1) . " parts at level 1";
 		for my $p (@parts) {
 			process_email($basedir, $projnum, $p->{'part'}->body_raw, $level + 1, $subject_override);
 		}
@@ -260,6 +263,7 @@ sub process_email ($$$$$)
 	else {
 		# save the parts (if split turned on)
 		if (getconfig('split')) {
+			@parts = grep { defined $_->{'name'} } @parts;
 			@parts = grep { defined $_->{'name'} } @parts;
 			for my $p (@parts) {
 				debug "Saving part " . $p->{'name'};
