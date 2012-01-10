@@ -278,7 +278,7 @@ sub process_email ($$$$$)
 		# save the whole file
 		my $tmpsubj = length("$origsubject.eml") > $max ? "email.eml" : "$origsubject.eml";
 		debug "Saving whole email ($tmpsubj), checksum " . $checksum;
-		save_dedup_file($uniquedir, $tmpsubj, $body, checksum);
+		save_dedup_file($uniquedir, $tmpsubj, $body, $checksum);
 	}
 
 }
