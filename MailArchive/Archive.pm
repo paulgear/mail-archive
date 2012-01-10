@@ -246,6 +246,7 @@ sub process_email ($$$$$)
 	debug "dropped " . ($count - $#parts) . " whitespace parts";
 
 	if (getconfig('smart-drop') && $outgoing && $toaddr[0]->address eq getconfig('archiver-email') && getconfig('split')) {
+		debug "Processing only attached emails";
 		# do not save the whole email or the attachments - only process attached emails
 		@parts = grep { $_->{'part'}->content_type =~ /^message\// && $_->{'level'} == 1 } @parts;
 		for my $p (@parts) {
