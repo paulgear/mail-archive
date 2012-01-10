@@ -236,14 +236,14 @@ sub process_email ($$$$$)
 	debug "uniquedir = ($uniquedir)";
 
 	# remove duplicate parts
-	my $count = @parts;
+	my $count = $#parts;
 	@parts = condense_parts(@parts);
-	debug "dropped " . $count - @parts . " duplicate parts";
+	debug "dropped " . ($count - $#parts) . " duplicate parts";
 
 	# remove whitespace parts
-	$count = @parts;
+	$count = $#parts;
 	@parts = grep { ! is_whitespace($_->{'part'}->body) } @parts;
-	debug "dropped " . $count - @parts . " whitespace parts";
+	debug "dropped " . ($count - $#parts) . " whitespace parts";
 
 	if (getconfig('smart-drop') && $outgoing && $toaddr[0]->address eq getconfig('archiver-email') && getconfig('split')) {
 		# do not save the whole email or the attachments - only process attached emails
