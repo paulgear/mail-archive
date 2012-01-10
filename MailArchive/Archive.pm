@@ -66,7 +66,7 @@ sub dedup_file ($$)
 		# if the file in the database doesn't exist, remove the db entry
 		unless (-e $check_file) {
 			debug "Non-existent file $check_file in database - cleaning up";
-			remove_file $check_file;
+			remove_file($check_file);
 			next;
 		}
 
@@ -143,17 +143,17 @@ sub process_email ($$$$$)
 
 	# work out whether the message is incoming or outgoing
 	my @fromaddr = Email::Address->parse($from);
-	dump_email_addresses "fromaddr", @fromaddr;
+	dump_email_addresses("fromaddr", @fromaddr);
 	my $outgoing = is_local(@fromaddr);
 	debug "outgoing = $outgoing";
 
 	# get To: recpients
 	my @toaddr = Email::Address->parse($to);
-	dump_email_addresses "toaddr", @toaddr;
+	dump_email_addresses("toaddr", @toaddr);
 
 	# get Cc: recipients
 	my @ccaddr = Email::Address->parse($cc);
-	dump_email_addresses "ccaddr", @ccaddr;
+	dump_email_addresses("ccaddr", @ccaddr);
 
 	# recipients are the combination of To & Cc
 	push @toaddr, @ccaddr;
@@ -237,7 +237,7 @@ sub process_email ($$$$$)
 
 	# remove duplicate parts
 	my $count = @parts;
-	@parts = condense_parts @parts;
+	@parts = condense_parts(@parts);
 	debug "dropped " . $count - @parts . " duplicate parts";
 
 	# remove whitespace parts
