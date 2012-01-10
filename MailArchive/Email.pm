@@ -35,7 +35,6 @@ $VERSION     = 1.00;
 	clean_subject
 	collect_names
 	collect_parts
-	concatenate_headers
 	condense_parts
 	dump_email_address
 	dump_email_addresses
@@ -152,18 +151,6 @@ sub collect_parts
 		}
 	}
 	return @parts;
-}
-
-# concatenate headers in an array into a single string
-sub concatenate_headers (@)
-{
-	my $header = "";
-	while ($#_ > -1) {
-		$header = $header . "$_[0]: $_[1]\n";
-		shift;
-		shift;
-	}
-	return $header;
 }
 
 # return the supplied list of message parts, with any duplicate parts eliminated
