@@ -31,10 +31,15 @@ $VERSION     = 1.00;
 @ISA         = qw(Exporter);
 @EXPORT      = qw(
 
+	checksum_parts
 	clean_subject
+	collect_names
+	collect_parts
 	concatenate_headers
+	condense_parts
 	dump_email_address
 	dump_email_addresses
+	dump_part
 	get_local_received_date
 	is_local
 	send_error
@@ -44,6 +49,7 @@ $VERSION     = 1.00;
 
 # code dependencies
 use Date::Parse;
+use Digest;
 use Email::MIME;
 use Email::Reply;
 use Email::Simple;
@@ -51,6 +57,7 @@ use Email::Simple;
 use MailArchive::Config;
 use MailArchive::Error;
 use MailArchive::Log;
+use MailArchive::Util;
 
 # prototypes
 sub parse_date ($);
@@ -71,6 +78,82 @@ sub clean_subject ($$)
 	return $subject;
 }
 
+# Given an array of hash pointers to message parts, collect all of the filenames and return the
+# length of the longest filename.  Compensate for stupid email systems (e.g. MS Exchange 6.5)
+# which provide an entire MS-DOS path as the attachment name.
+sub collect_names (@)
+{
+	my $max = 0;
+	my %names;
+	for my $p (@_) {
+		my $name = $p->{'part'}->filename;
+		my $disp = $p->{'part'}->header('Content-Disposition');
+		if (defined $name) {
+			# name is supplied in the message
+			if ($name =~ /^[A-Z]:\\/) {
+				# nasty MS-DOS path mangling - delete everything up to and
+				# including the final backslash
+				$name =~ s/(.*)\\([^\\]+)/$2/;
+			}
+		}
+		elsif (defined $disp) {
+			# content disposition supplied, but no name: make one up
+			$name = $p->{'part'}->filename(1);
+		}
+		else {
+			# skip parts with no name or content disposition
+			next;
+		}
+
+		# note any name clashes
+		if (exists $names{$name}) {
+			$p->{'nameclash'} = $names{$name};
+		}
+		else {
+			$names{$name} = $p;
+		}
+
+		# save the name and note max length
+		$p->{'name'} = $name;
+		$max = length($name) if length($name) > $max;
+	}
+	return $max;
+}
+
+# checksum object
+my $digest;
+
+# return an array of hash pointers containing all message parts
+# checksum each part along the way
+sub collect_parts
+{
+	my ($msg, $level) = @_;
+	$level = 0 unless defined $level;
+	$digest = Digest->new("SHA-256") unless defined $digest;
+
+	limit_recursion($level);
+
+	my @parts;
+	for my $p ($msg->parts) {
+		# get checksum for the part
+		$digest->add($p->body);
+		my $cksum = $digest->hexdigest;
+		debug "checksum $cksum";
+
+		# add the part to our array
+		push @parts, { part => $p, level => $level, checksum => $cksum };
+
+		# recurse if necessary
+		if (defined $p->content_type and $p->content_type =~ /^message\//) {
+			my $sp = Email::MIME->new($p->body_raw);
+			if (defined $sp and $sp->subparts > 0) {
+				push @parts, collect_parts($sp, $level + 1);
+			}
+		}
+	}
+	return @parts;
+}
+
 # concatenate headers in an array into a single string
 sub concatenate_headers (@)
 {
@@ -81,6 +164,19 @@ sub concatenate_headers (@)
 		shift;
 	}
 	return $header;
+}
+
+# return the supplied list of message parts, with any duplicate parts eliminated
+sub condense_parts (@)
+{
+	my @parts;
+	my %cksums;
+	for my $p (@_) {
+		next if exists $cksums{$p->{'checksum'}};
+		$cksums{$p->{'checksum'}} = $p->{'part'}->filename;
+		push @parts, $p;
+	}
+	return @parts;
 }
 
 sub dump_email_address ($$)
@@ -100,6 +196,24 @@ sub dump_email_addresses ($@)
 	for my $email (@_) {
 		dump_email_address $label, $email;
 	}
+}
+
+sub dump_part
+{
+	my $part = shift;
+	my $indent = shift;
+	$indent = 0 unless defined $indent;
+	my $prefix = "    " x $indent;
+	my $disp = $part->header('Content-Disposition');
+	#return if defined $disp and $disp =~ /^attach/;
+	#printf "%s----\n", $prefix;
+	print "\n";
+	printf "%stype = %s\n", $prefix, $part->content_type;
+	printf "%sdisp = %s\n", $prefix, $disp
+		if defined $disp;
+	printf "%sname = %s\n", $prefix, $part->filename(1);
+	printf "%ssubparts = %d\n", $prefix, scalar $part->subparts
+		if scalar $part->subparts > 0;
 }
 
 # Given a list of received headers, return the earliest date the message was received by a

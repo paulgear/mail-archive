@@ -56,21 +56,17 @@ use Scalar::Util qw/tainted/;
 use MailArchive::Config;
 use MailArchive::Log;
 
-# Given a base and a maximum sequence number (default 99),
+# Given a base, a margin, and a maximum sequence number (default 99),
 # find the first unused directory name in the sequence.
 # Ensure the directory name used is sufficiently less than the overall
 # path length limit to enable files to be created within it.
-# Maximum path length is maxpath minus room for:
-#	1 space
-#	2 digit sequence number
-#	1 path separator
-#	14 character filename following
 sub check_seq_directory
 {
 	my $base = shift;
+	my $margin = shift;
 	my $seq = shift;
 	$seq = 99 unless defined $seq;
-	my $maxlen = getconfig('maxpath') - 18;
+	my $maxlen = getconfig('maxpath') - $margin;
 	for (my $i = 1; $i <= $seq; ++$i) {
 		my $f = sprintf "%.*s %02d", $maxlen, $base, $i;
 		next if -d $f;
@@ -79,7 +75,7 @@ sub check_seq_directory
 	return undef;
 }
 
-# create a directory given a base name and working out a valid sequence number
+# create a directory given a base name and margin length; work out a valid sequence number
 sub create_seq_directory
 {
 	my $dir = check_seq_directory(@_);

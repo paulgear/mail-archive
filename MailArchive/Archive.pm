@@ -38,7 +38,6 @@ $VERSION     = 1.00;
 #%EXPORT_TAGS = ( DEFAULT => [qw(&mysub2)] );
 
 # code dependencies
-use Digest;
 use File::Compare;
 use File::Spec;
 use Scalar::Util qw/tainted/;
@@ -51,23 +50,10 @@ use MailArchive::Util;
 
 require "site.pl";
 
-my $digest;
-
-sub init ()
-{
-	$digest = Digest->new("SHA-256");
-}
-
-# checksum file, find out whether it matches another file in the database
+# find out whether file matches another file in the database
 sub dedup_file ($$)
 {
-	init() unless $digest;
-
-	my ($fullpath, $data) = @_;
-	$digest->add($data);
-	my $cksum = $digest->hexdigest;
-	debug "checksum $cksum";
-
+	my ($fullpath, $cksum) = @_;
 	for my $check_file (check_file($fullpath, $cksum)) {
 		# If we have this exact file & checksum already in the db, do nothing.
 		# This really shouldn't happen unless we've been deleting files without
@@ -89,119 +75,39 @@ sub dedup_file ($$)
 
 		# move the file aside
 		unless (rename($fullpath, "$fullpath.tmp")) {
-			warn "Cannot move aside $fullpath";
-			# we're done - we'll just put up with no dedup
-			last;
+			# Hasn't worked, we'll just put up with no dedup
+			warn "Cannot move aside $fullpath ($!)";
 		}
-
 		# hard link it to the matching file
-		if (link($check_file, $fullpath)) {
+		elsif (link($check_file, $fullpath)) {
 			debug "Linked $fullpath to $check_file";
 			warn "Cannot delete $fullpath.tmp ($!) - please delete manually"
 				unless unlink("$fullpath.tmp") == 1;
-			# we're done - no need to check against any more files
-			last;
 		}
 		else {
+			# Hasn't worked, we'll just put up with no dedup
 			warn "Cannot link $fullpath to $check_file ($!)";
-			rename("$fullpath.tmp", $fullpath)
-				or warn "Cannot move back $fullpath ($!) - please rename manually";
+			warn "Cannot move $fullpath.tmp to $fullpath ($!) - please rename manually"
+				unless rename("$fullpath.tmp", $fullpath);
 		}
+
+		# we're done - no need to check against any more files
+		last;
 	}
 	add_file($fullpath, $cksum);
 }
 
 # save the file and dedup
-sub save_dedup_file ($$$)
+sub save_dedup_file ($$$$)
 {
-	my ($dir, $file, $content) = @_;
+	my ($dir, $file, $content, $cksum) = @_;
 	my $fullpath = File::Spec->catfile($dir, $file);
-	$fullpath = shorten_path($fullpath);
 	save_file($fullpath, $content);
-	dedup_file($fullpath, $content);
-}
-
-# save the body of the given file part to disk
-sub save_part ($$$)
-{
-	my ($dir, $file, $body) = @_;
-	if (is_whitespace($body)) {
-		# don't save empty parts
-		debug "Message part $file empty - dropping";
-		return;
-	}
-	save_dedup_file($dir, $file, $body);
-}
-
-# prototypes for recursive functions
-sub process_email ($$$$$);
-sub process_part ($$$$$$$$$);
-
-sub process_part ($$$$$$$$$)
-{
-	my ($basedir, $projnum, $dir, $part, $level, $prefix, $partnum, $subject, $smart_drop) = @_;
-
-	limit_recursion($level);
-
-	my $type = $part->content_type;
-	$type = "text/plain" unless defined $type;
-	my $filename = (defined $part->filename) ? $part->filename : $part->invent_filename($type);
-
-	debug "part $prefix$partnum: type $type, name: $filename";
-	if (scalar $part->subparts > 0) {
-		# process any subparts
-		my $subpartnum = 1;
-		for my $subpart ($part->subparts) {
-			process_part($basedir, $projnum, $dir, $subpart, $level + 1,
-				"$prefix$partnum.", $subpartnum, $subject, $smart_drop);
-		}
-	}
-	# TODO: work out whether there can be a body on a part with multiple subparts
-	elsif ($type =~ /^message\//) {
-		debug "processing attched message, type = $type";
-		process_email($basedir, $projnum, $part->body_raw, $level + 1, $subject);
-	}
-	else {
-		# save part if it's an attachment
-		if (defined $part->filename or defined $part->header('Content-Disposition')) {
-			if ($smart_drop) {
-				debug "Ignoring attachment due to smart-drop";
-			}
-			else {
-				save_part($dir, $filename, $part->body);
-			}
-		}
-		else {
-			debug "part $prefix$partnum is not an attachment - skipping";
-		}
-	}
-}
-
-# save every part of the given message
-sub save_message ($$$$$$$)
-{
-	my ($basedir, $projnum, $dir, $msg, $level, $subject, $smart_drop) = @_;
-
-	debug "smart_drop mode invoked" if $smart_drop;
-
-	# TODO: Add processing of stats here
-
-	# save the message headers to disk
-	#save_part($dir, "headers$level.txt", concatenate_headers($msg->header_pairs()));
-
-	#my $numparts = $msg->parts;
-	my $structure = $msg->debug_structure;
-	chomp($structure);
-	debug($structure);
-
-	# iterate through each message part
-	my $partnum = 1;
-	for my $part ($msg->parts) {
-		process_part($basedir, $projnum, $dir, $part, $level, "", $partnum++, $subject, $smart_drop);
-	}
+	dedup_file($fullpath, $cksum);
 }
 
 # main email processor
+sub process_email ($$$$$);
 sub process_email ($$$$$)
 {
 	my ($basedir, $projnum, $body, $level, $subject_override) = @_;
@@ -210,6 +116,11 @@ sub process_email ($$$$$)
 
 	# open parsed version of the email
 	my $msg = Email::MIME->new($body);
+
+	# dump message structure
+	my $structure = $msg->debug_structure;
+	chomp($structure);
+	debug($structure);
 
 	# get the message headers
 	my $header = $msg->header(getconfig('status-header'));
@@ -278,10 +189,16 @@ sub process_email ($$$$$)
 	my $emaildir = get_project_email_dir($projdir, $outgoing);
 	debug "emaildir = $emaildir";
 
-	# Check the length of the path - if it's too long, we can't
-	# shorten it so there's nothing we can do but exit.  Allow
-	# 40 characters' padding for directory & file names.
-	my $len = path_too_long($emaildir, 40);
+	# parse the message, gather attachment names, determine maximum length
+	my @parts = collect_parts($msg);
+	debug "Found " . @parts . " usable parts in message";
+	my $max = collect_names(@parts);
+	debug "Maximum attachment name length is " . $max;
+
+	# Check the length of the path - if it's too long, we can't shorten it so there's
+	# nothing we can do but exit.  Leave enough room for the longest attachment name, 
+	# two path separators, and a minimal email directory name (yymmdd nn).
+	my $len = path_too_long($emaildir, $max + 11);
 	if ($len) {
 		error "Path to email directory ($emaildir) too long";
 	}
@@ -313,22 +230,47 @@ sub process_email ($$$$$)
 	# correspondence directory
 	my $datestring = defined $received ? datestring($received) : datestring();
 	my $uniquefile = "$datestring ($otherparty) $subject";
-	my $uniquebase = "$emaildir/$uniquefile";
+	my $uniquebase = File::Spec->catfile($emaildir, $uniquefile);
 	debug "uniquebase = ($uniquebase)";
-	my $uniquedir = create_seq_directory($uniquebase);
+	my $uniquedir = create_seq_directory($uniquebase, $max + 2);
+	debug "uniquedir = ($uniquedir)";
+
+	# remove duplicate parts
+	my $count = @parts;
+	@parts = condense_parts @parts;
+	debug "dropped " . $count - @parts . " duplicate parts";
+
+	# remove whitespace parts
+	$count = @parts;
+	@parts = grep { ! is_whitespace($_->{'part'}->body) } @parts;
+	debug "dropped " . $count - @parts . " whitespace parts";
 
 	if (getconfig('smart-drop') && $outgoing && $toaddr[0]->address eq getconfig('archiver-email') && getconfig('split')) {
-		# do not save the whole email or the attachments if it's a smart drop - only process attached emails
-		save_message($basedir, $projnum, $uniquedir, $msg, 1, $subject, 1);
+		# do not save the whole email or the attachments - only process attached emails
+		@parts = grep { $_->{'part'}->content_type =~ /^message\// && $_->{'level'} == 1 } @parts;
+		for my $p (@parts) {
+			process_email($basedir, $projnum, $p->{'part'}->body_raw, $level + 1, $subject_override);
+		}
+
+		# clean up unneeded directory
 		debug "Removing directory $uniquedir";
 		debug "$uniquedir not removed: $!" unless rmdir $uniquedir;
 	}
 	else {
 		# save the parts (if split turned on)
-		save_message($basedir, $projnum, $uniquedir, $msg, 1, $subject, 0) if getconfig('split');
+		if (getconfig('split')) {
+			@parts = grep { defined $_->{'name'} } @parts;
+			for my $p (@parts) {
+				debug "Saving part " . $p->{'name'};
+				save_dedup_file($uniquedir, $p->{'name'}, $p->{'part'}->body, $p->{'checksum'});
+			}
+		}
 		# save the whole file
-		save_dedup_file($uniquedir, "$origsubject.eml", $body);
+		my $tmpsubj = length("$origsubject.eml") > $max ? "email.eml" : "$origsubject.eml";
+		debug "Saving whole email ($tmpsubj), checksum " . $parts[0]->{'checksum'}; 
+		save_dedup_file($uniquedir, $tmpsubj, $body, $parts[0]->{'checksum'});
 	}
+
 }
 
 1;	# file must return true - do not remove this line
