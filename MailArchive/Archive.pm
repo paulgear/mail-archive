@@ -195,6 +195,11 @@ sub process_email ($$$$$)
 	my $max = collect_names(@parts);
 	debug "Maximum attachment name length is " . $max;
 
+	# save the overall message checksum; we do this here to ensure it's available later no
+	# matter what happens to the parts array
+	my $checksum = $parts[0]->{'checksum'};
+	debug "Message checksum $checksum";
+
 	# Check the length of the path - if it's too long, we can't shorten it so there's
 	# nothing we can do but exit.  Leave enough room for the longest attachment name, 
 	# two path separators, and a minimal email directory name (yymmdd nn).
@@ -272,8 +277,8 @@ sub process_email ($$$$$)
 		}
 		# save the whole file
 		my $tmpsubj = length("$origsubject.eml") > $max ? "email.eml" : "$origsubject.eml";
-		debug "Saving whole email ($tmpsubj), checksum " . $parts[0]->{'checksum'}; 
-		save_dedup_file($uniquedir, $tmpsubj, $body, $parts[0]->{'checksum'});
+		debug "Saving whole email ($tmpsubj), checksum " . $checksum;
+		save_dedup_file($uniquedir, $tmpsubj, $body, checksum);
 	}
 
 }
