@@ -40,7 +40,6 @@ $VERSION     = 1.00;
 	read_file
 	read_stdin
 	save_file
-	shorten_path
 	validate_directory
 
 );
@@ -160,54 +159,6 @@ sub save_file ($$)
 	print $fh $content;
 	close $fh
 		or error "Cannot close $fname: $!";
-}
-
-# Cut off words in the file name until the total path length is short enough,
-# keeping the original extension.  Use simple truncation if other shortening
-# techniques fail.  Ensure the file name is unique.
-sub shorten_path ($)
-{
-	my $path = shift;
-	my $max = getconfig('maxpath');
-
-	# enforce length limit
-	for (my $len = length($path); $len > $max; $len = length($path)) {
-		# split path into dirname, basename, and extension
-		my ($base, $dir, $ext) = fileparse($path, qr/\.[^.]*/);
-		if ($base =~ /[[:punct:]\s]+/) {
-			# if there are still punctuation or space chars, eliminate the last word
-			$base =~ s/[[:punct:]\s]+[[:alpha:][:digit:]]+\s*$//;
-			$path = "$dir$base$ext";
-		}
-		else {
-			# otherwise, just truncate it
-			$base = substr($base, 0, $max - length($dir) - length($ext) - 3);
-			$path = "$dir$base$ext";
-			$len = length($path);
-			if ($len > $max) {
-				# we failed (because $dir or $ext was too long)
-				return undef;
-			}
-		}
-	}
-
-	# ensure file is unique
-	my $i = 1;
-	my ($base, $dir, $ext) = fileparse($path, qr/\.[^.]*/);
-	while (-e $path) {
-		# sleep a random amount in case we have multiple instances competing
-		sleep(rand($i % 5));
-
-		# construct a new path using the sequence number
-		$path = sprintf "%s%s%s%02d%s", $dir, $base, $base eq "" ? "" : " ", $i, $ext;
-
-		++$i;
-		if ($i > 99) {
-			# we failed to find a unique file
-			return undef;
-		}
-	}
-	return $path;
 }
 
 # ensure directory is a canonical path and it exists, returning the untainted name

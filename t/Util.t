@@ -21,7 +21,7 @@
 #
 
 # module setup
-use Test::More tests => 65;
+use Test::More tests => 54;
 use strict;
 use warnings;
 
@@ -118,45 +118,10 @@ ok( path_too_long($str, length($str)), length($str) . " char string with " . len
 # read all of standard input into a single scalar and return it
 #sub read_stdin ()
 
-print "setup for save_file and shorten_path\n";
-
-my $dir;
-my $base = "/tmp/abcdefghi";
-$dir = $base . ("/abcdefghi" x 22);
-mkpath $dir;
-
-# save the given content to the file
-#sub save_file ($$)
-#	my ($fname, $content) = @_;
-print "save_file\n";
-
-save_file( "$dir/shorten-me-2.csv", "Hello world\n" );
-
-# Cut off words in the file name until the total path length is short enough,
-# keeping the original extension.  Use simple truncation if other shortening
-# techniques fail.  Ensure the file name is unique.
-#sub shorten_path ($)
-#	my $path = shift;
-print "shorten_path\n";
-
-is( shorten_path("$dir/"), "$dir/0001", "just the dirname" );
-is( shorten_path("$dir/noextension"), "$dir/noextension", "no extension" );
-is( shorten_path("$dir/dotextension."), "$dir/dotextension.", "single dot extension" );
-is( shorten_path("$dir/a.longextension"), "$dir/a.longextension", "long extension" );
-ok( ! defined shorten_path("$dir/a.reallyverybiglongextension"), "very long extension" );
-is( shorten_path("$dir/shortenough.csv"), "$dir/shortenough.csv", "single-word basename - short enough already" );
-is( shorten_path("$dir/notquiteshortenough.csv"), "$dir/notquitesho.csv", "single-word basename - not short enough" );
-is( shorten_path("$dir/shorten-me-please.csv"), "$dir/shorten-me.csv", "multi-word basename" );
-is( shorten_path("$dir/shorten me please.csv"), "$dir/shorten me.csv", "multi-word basename" );
-is( shorten_path("$dir/shorten-me-1-more-time.csv"), "$dir/shorten-me-1.csv", "multi-word basename, file doesn't exist" );
-is( shorten_path("$dir/shorten-me-2-more-times.csv"), "$dir/shorten-me-2 0001.csv", "multi-word basename, file exists" );
-
-print "cleanup from save_file and shorten_path\n";
-rmtree $base;
-
 # ensure directory is a canonical path and it exists, returning the untainted name
 print "validate_directory\n";
 
+my $dir;
 $dir = "/";				is( validate_directory($dir), $dir, "Root directory: $dir");
 $dir = "/dev";				is( validate_directory($dir), $dir, "System directory: $dir");
 $dir = "/var/../tmp";			is( validate_directory($dir), $dir, "Complex: $dir");
