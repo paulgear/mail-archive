@@ -266,19 +266,20 @@ sub process_email ($$$$$)
 		debug "$uniquedir not removed: $!" unless rmdir $uniquedir;
 	}
 	else {
-		# save the parts (if split turned on)
 		if (getconfig('split')) {
-			@parts = grep { defined $_->{'name'} } @parts;
+			# save the parts (if split turned on) - the whole email is the first part
 			@parts = grep { defined $_->{'name'} } @parts;
 			for my $p (@parts) {
 				debug "Saving part " . $p->{'name'};
 				save_dedup_file($uniquedir, $p->{'name'}, $p->{'part'}->body, $p->{'checksum'});
 			}
 		}
-		# save the whole file
-		my $tmpsubj = length("$origsubject.eml") > $max ? "email.eml" : "$origsubject.eml";
-		debug "Saving whole email ($tmpsubj), checksum " . $checksum;
-		save_dedup_file($uniquedir, $tmpsubj, $body, $checksum);
+		else {
+			# otherwise, save the whole file
+			my $tmpsubj = length("$origsubject.eml") > $max ? "email.eml" : "$origsubject.eml";
+			debug "Saving whole email ($tmpsubj), checksum " . $checksum;
+			save_dedup_file($uniquedir, $tmpsubj, $body, $checksum);
+		}
 	}
 
 }
