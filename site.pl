@@ -73,11 +73,14 @@ sub get_project_dir ($$)
 	my @searchpath = @{getconfig('searchpath')};
 	# We put the search path and subdirectories inside the number search
 	# so that the most exact matches get priority.
+	$basedir =~ s/\/*$//;					# remove trailing /
 	for my $num ($projnum, $nnnnnn, $nnnn) {
 		for my $path (@searchpath) {
 			$path =~ s/^\/*//;			# remove leading /
 			$path =~ s/\/*$//;			# remove trailing /
 			for my $subdir (@subdirs) {
+				$subdir =~ s/^\/*//;		# remove leading /
+				$subdir =~ s/\/*$//;		# remove trailing /
 				my @dirs = glob "$basedir/$path/$subdir/${num}*";
 				if ($#dirs >= 0 && -d $dirs[0]) {
 					$dirs[0] =~ /^(.*)$/;

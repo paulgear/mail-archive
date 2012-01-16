@@ -253,6 +253,7 @@ sub process_email ($$$$$)
 	debug "smart-drop is " . getconfig('smart-drop');
 	if (getconfig('smart-drop') && $outgoing && $toaddr[0]->address eq getconfig('archiver-email') && getconfig('split')) {
 		debug "Processing only attached emails";
+
 		# do not save the whole email or the attachments - only process attached emails
 		@parts = grep { $_->{'part'}->content_type =~ /^message\// } @parts;
 		debug "Found " . ($#parts + 1) . " message parts";
