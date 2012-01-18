@@ -100,7 +100,15 @@ sub dedup_file ($$)
 # save the file and dedup
 sub save_dedup_file ($$$$)
 {
-	my ($dir, $file, $content, $cksum) = @_;
+	my ($dir, $origfile, $content, $cksum) = @_;
+
+	# replace slashes in file name
+	my $file = $origfile;
+	$file =~ s/\/+/ /g;
+	if ($file ne $origfile) {
+		debug "Using $file for filename instead of $origfile";
+	}
+
 	my $fullpath = File::Spec->catfile($dir, $file);
 	save_file($fullpath, $content);
 	dedup_file($fullpath, $cksum);
