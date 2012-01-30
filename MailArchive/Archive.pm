@@ -110,6 +110,10 @@ sub save_dedup_file ($$$$)
 	}
 
 	my $fullpath = File::Spec->catfile($dir, $file);
+	if (-e $fullpath) {
+		warn "File $fullpath already exists - skipping";
+		return;
+	}
 	save_file($fullpath, $content);
 	dedup_file($fullpath, $cksum);
 }
@@ -278,7 +282,6 @@ sub process_email ($$$$$)
 	else {
 		# save the parts (if split turned on)
 		if (getconfig('split')) {
-			@parts = grep { defined $_->{'name'} } @parts;
 			@parts = grep { defined $_->{'name'} } @parts;
 			for my $p (@parts) {
 				debug "Saving part " . $p->{'name'};
