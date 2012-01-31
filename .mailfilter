@@ -20,6 +20,13 @@ if (/Subject:.*[[(](PERSONAL|MESSAGE|GENERAL)[)\]]/)
 	to "/dev/null"			# make sure we get a log of the email details
 }
 
+# drop return receipts
+if (/Content-Type: *multipart.report; *report-type=disposition-notification/)
+{
+	log "Dropping return receipt"
+	to "/dev/null"			# make sure we get a log of the email details
+}
+
 # Send message to the mail-archive process
 log "Attempting mail-archive"
 to "| $HOME/mail-archive $DIR"
