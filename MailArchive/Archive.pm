@@ -272,7 +272,7 @@ sub process_email ($$$$$)
 		@parts = grep { $_->{'level'} == 0 } @parts;
 		debug "Found " . ($#parts + 1) . " parts at level 0";
 		for my $p (@parts) {
-			process_email($basedir, $projnum, $p->{'part'}->body_raw, $level + 1, $subject_override);
+			process_email($basedir, $projnum, $p->{'part'}->body_raw, $level + 1, $subject);
 		}
 
 		# clean up unneeded directory
