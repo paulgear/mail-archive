@@ -6,6 +6,13 @@ DIR="/my/project/directory"		# the base dir in which to save project files
 
 logfile $HOME/mailfilter.log
 
+# drop return receipts
+if (/Content-Type: *multipart.report; *report-type=disposition-notification/)
+{
+	log "Dropping return receipt"
+	to "/dev/null"			# make sure we get a log of the email details
+}
+
 # Drop messages from mail-archive itself
 if (/From: *$ADMIN/)
 {
@@ -17,13 +24,6 @@ if (/From: *$ADMIN/)
 if (/Subject:.*[[(](PERSONAL|MESSAGE|GENERAL)[)\]]/)
 {
 	log "Dropping ($MATCH) message"
-	to "/dev/null"			# make sure we get a log of the email details
-}
-
-# drop return receipts
-if (/Content-Type: *multipart.report; *report-type=disposition-notification/)
-{
-	log "Dropping return receipt"
 	to "/dev/null"			# make sure we get a log of the email details
 }
 
