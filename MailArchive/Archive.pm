@@ -137,21 +137,13 @@ sub process_email ($$$$$)
 	# get the message headers
 	my $header = $msg->header(getconfig('status-header'));
 	my $subject = $msg->header("Subject");
+	my $origsubject = $subject;
 	my $from = $msg->header("From");
 	my $to = $msg->header("To");
 	my $cc = $msg->header("Cc");
 
 	# Show subject
 	debug "subject = $subject";
-
-	# put in a subject override if necessary
-	my $origsubject = $subject;
-	if (getconfig('subject-override') && defined $subject_override) {
-		unless ($subject_override =~ /^\s*$/) {
-			$subject = $subject_override;
-			debug "subject overridden with $subject";
-		}
-	}
 
 	# work out whether the message is incoming or outgoing
 	my @fromaddr = Email::Address->parse($from);
@@ -171,7 +163,7 @@ sub process_email ($$$$$)
 	push @toaddr, @ccaddr;
 
 	# validate project number
-	$projnum = check_project_num(defined $projnum ? $projnum : $subject);
+	$projnum = check_project_num($projnum, $subject, $subject_override);
 	unless (defined $projnum) {
 		if ($outgoing) {
 			send_error($msg, "Project number not found in message", \@toaddr);
@@ -188,6 +180,14 @@ sub process_email ($$$$$)
 	# remove noise from subject
 	$subject = clean_subject($subject, $projnum);
 	$origsubject = clean_subject($origsubject, $projnum);
+
+	# put in a subject override if necessary
+	if (getconfig('subject-override') && defined $subject_override) {
+		unless ($subject_override =~ /^\s*$/) {
+			$subject = $subject_override;
+			debug "subject overridden with $subject";
+		}
+	}
 
 	# search for project directory
 	my $projdir = get_project_dir($basedir, $projnum);

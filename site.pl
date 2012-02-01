@@ -23,20 +23,27 @@
 use strict;
 
 use File::Path qw/make_path/;
+use Scalar::Util qw/tainted/;
 
 use MailArchive::Config;
 use MailArchive::Util;
 
 
-# check that this is a valid project number
-sub check_project_num ($)
+# check all of the passed strings for a valid project number
+sub check_project_num (@)
 {
-	my $projnum = shift;
 	my $projnum_regex = getconfig('projnum-regex');
-	my @match = $projnum =~ /$projnum_regex/;
-	my $ret = ($#match == 0 ? $match[0] : undef);
+	my $ret = undef;
+	for my $projnum (@_) {
+		next unless defined $projnum;
+		my @match = $projnum =~ /$projnum_regex/;
+		if ($#match == 0) {
+			$ret = $match[0];
+			last;
+		}
+	}
 	debug "Project number is " . (defined $ret ? $ret : "UNDEFINED");
-	error "Project number $projnum tainted" if tainted($ret);
+	error "Project number $ret tainted" if defined $ret and tainted($ret);
 	return $ret;
 }
 
