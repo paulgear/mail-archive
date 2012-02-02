@@ -214,7 +214,7 @@ sub create_statements ()
 		or error "Cannot create delete statement: " . $dbh->errstr;
 	debug "Creating message select statement";
 	$message_select = $dbh->prepare("
-		select id, checksum, project, timestamp
+		select id, checksum, project, time
 		from messages
 		where id = ?
 	")
