@@ -142,6 +142,11 @@ sub process_email ($$$$$)
 	my $to = $msg->header("To");
 	my $cc = $msg->header("Cc");
 
+	# get message id, prune punctuation
+	my $messageid = $msg->header("Message-Id");
+	$messageid =~ s/^\s*<\s*//;
+	$messageid =~ s/\s*>\s*$//;
+
 	# Show subject
 	debug "subject = $subject";
 
@@ -211,6 +216,14 @@ sub process_email ($$$$$)
 	# matter what happens to the parts array
 	my $checksum = $parts[0]->{'checksum'};
 	debug "Message checksum $checksum";
+
+	# check for duplicate message id
+	debug "Checking for existing message id";
+	my $row = check_message($messageid, $checksum, $projnum);
+	if (defined $row) {
+		debug "Seen message id $row->[0] previously in project $row->[2] at $row->[3]";
+		exit 0;
+	}
 
 	# Check the length of the path - if it's too long, we can't shorten it so there's
 	# nothing we can do but exit.  Leave enough room for the longest attachment name, 

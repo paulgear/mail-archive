@@ -8,8 +8,8 @@ $config{'archiver-email'}	= 'archive@localhost';
 $config{'admin-email'}		= 'root@localhost';
 
 # Database connection string, username and password
-$config{'dbconnect'}		= 'DBI:mysql:database=mailarchive';
-$config{'dbuser'}		= 'mailarchive';
+$config{'dbconnect'}		= 'DBI:mysql:database=mailarchivedev';
+$config{'dbuser'}		= '';
 $config{'dbpass'}		= 'mailarchive';
 
 # Subject of emails from mail-archive

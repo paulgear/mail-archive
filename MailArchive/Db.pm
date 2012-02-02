@@ -33,6 +33,7 @@ $VERSION     = 1.00;
 
 	add_file
 	check_file
+	check_message
 	remove_file
 
 );
@@ -45,10 +46,14 @@ use DBI;
 use MailArchive::Config;
 use MailArchive::Log;
 
+my $dbh;
 my $select;
 my $insert;
 my $delete;
-my $dbh;
+my $message_select;
+my $message_insert;
+my $lock_statement;
+my $unlock_statement;
 
 sub add_file ($$)
 {
@@ -76,6 +81,44 @@ sub check_file ($$)
 	return @results;
 }
 
+# This function works as a mutex to prevent multiple copies of mail-archive checking for the
+# existence of a message id in parallel.  Overall logic:
+# - lock messages table
+# - check if message id exists in messages table
+# - if not, add it
+# - unlock messages table
+# Use of RaiseError is just to make the database code less ugly. Without the exception handling
+# it would require error handling at each step.
+sub check_message ($$$)
+{
+	init() unless defined $message_select;
+
+	my ($id, $checksum, $project) = @_;
+	my $ret;
+
+	my $orig = $dbh->{RaiseError};
+	$dbh->{RaiseError} = 1;
+	eval {
+		$lock_statement->execute();
+		$message_select->execute($id);
+		while (my @row = $message_select->fetchrow_array()) {
+			$ret = \@row;
+			last;
+		}
+		$message_select->finish();
+		unless (defined $ret) {
+			$message_insert->execute($id, $checksum, $project);
+		}
+		$unlock_statement->execute();
+	};
+	if ($@) {
+		warning "Database error occurred: " . $dbh->errstr;
+	}
+	$dbh->{RaiseError} = $orig;
+
+	return $ret;
+}
+
 sub remove_file ($)
 {
 	init() unless defined $delete;
@@ -98,7 +141,7 @@ sub open_db ()
 
 sub create_tables ()
 {
-	debug "Creating table (if required)";
+	debug "Creating fileinfo table (if required)";
 	$dbh->do("
 		create table if not exists fileinfo (
 			filename varchar(500) unique,
@@ -107,7 +150,28 @@ sub create_tables ()
 			primary key (filename, checksum)
 		)
 	")
-		or die "Cannot create table: " . $dbh->errstr;
+		or die "Cannot create fileinfo table: " . $dbh->errstr;
+	debug "Creating messages table (if required)";
+	$dbh->do("
+		create table if not exists messages (
+			id        varchar(500),
+			checksum  varchar(500),
+			project   varchar(500),
+			time      timestamp,
+			primary key (id)
+		)
+	")
+		or die "Cannot create messages table: " . $dbh->errstr;
+#	debug "Creating references table (if required)";
+#	$dbh->do("
+#		create table if not exists references (
+#			reference varchar(500),
+#			messageid varchar(500),
+#			time      timestamp,
+#			primary key (reference, messageid)
+#		)
+#	")
+#		or die "Cannot create references table: " . $dbh->errstr;
 }
 
 sub create_statements ()
@@ -130,6 +194,22 @@ sub create_statements ()
 		delete from fileinfo where filename = ?
 	")
 		or error "Cannot create delete statement: " . $dbh->errstr;
+	debug "Creating message select statement";
+	$message_select = $dbh->prepare("
+		select id, checksum, project, timestamp
+		from messages
+		where id = ?
+	")
+		or error "Cannot create message select statement: " . $dbh->errstr;
+	debug "Creating message insert statement";
+	$message_insert = $dbh->prepare("
+		insert into messages (id, checksum, project) values (?, ?, ?)
+	")
+		or error "Cannot create message insert statement: " . $dbh->errstr;
+	$lock_statement = $dbh->prepare("lock tables messages write, fileinfo write")
+		or error "Cannot create lock tables statement: " . $dbh->errstr;
+	$unlock_statement = $dbh->prepare("unlock tables")
+		or error "Cannot create unlock tables statement: " . $dbh->errstr;
 }
 
 sub init ()
