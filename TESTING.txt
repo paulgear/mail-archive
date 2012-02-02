@@ -1,0 +1,36 @@
+Standard tests which should be run against a new version of mail-archive
+========================================================================
+
+
+Normal behaviour
+----------------
+
+Test:	Email from internal user to internal user with valid project id
+Result:	Email placed in outgoing folder
+
+Test:	Email from external user to internal user with no project id
+Result:	Email dropped quietly (this should be handled in the mail relay by
+	tagging emails with no project id)
+
+Test:	Email from internal user to internal user with drop tag in subject
+Result:	Email dropped quietly
+
+Test:	Email from internal user to internal user with no project id
+Result:	Error to sender
+
+Test:	Email from internal user with non-existent project id
+Result:	Error to sender
+
+Test:	Email from external user with non-existent project id
+Result:	Error to admin
+
+
+Bugs fixed
+----------
+
+Test:	Email with very long subject and long attachment names
+Result: Subject shortened appropriately; attachment name preserved.
+
+Test:	Email with slashes in the subject
+Result: Slashes replaced with spaces
+
