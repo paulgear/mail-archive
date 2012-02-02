@@ -221,7 +221,7 @@ sub process_email ($$$$$)
 	debug "Checking for existing message id";
 	my $row = check_message($messageid, $checksum, $projnum);
 	if (defined $row) {
-		debug "Seen message id $row->[0] previously in project $row->[2] at $row->[3]";
+		debug "Dropping previously seen message: $row->[0] $row->[2] $row->[3]";
 		exit 0;
 	}
 
