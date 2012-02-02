@@ -96,26 +96,36 @@ sub check_message ($$$)
 	my ($id, $checksum, $project) = @_;
 	my $ret;
 
+	debug "Setting RaiseError flag";
 	my $orig = $dbh->{RaiseError};
 	$dbh->{RaiseError} = 1;
 	eval {
+		debug "Locking tables";
 		$lock_statement->execute();
+		debug "Querying for $id";
 		$message_select->execute($id);
+		debug "Finished query";
 		while (my @row = $message_select->fetchrow_array()) {
 			$ret = \@row;
+			debug "Got result: $ret";
 			last;
 		}
+		debug "Closing query";
 		$message_select->finish();
 		unless (defined $ret) {
+			debug "Inserting $id, $checksum, $project";
 			$message_insert->execute($id, $checksum, $project);
 		}
+		debug "Unlocking tables";
 		$unlock_statement->execute();
 	};
 	if ($@) {
 		warning "Database error occurred: " . $dbh->errstr;
 	}
+	debug "Resetting RaiseError flag";
 	$dbh->{RaiseError} = $orig;
 
+	debug "Returning $ret";
 	return $ret;
 }
 
