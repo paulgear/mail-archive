@@ -104,6 +104,7 @@ my $digest;
 
 sub get_checksum ($)
 {
+	return undef unless defined $_[0];
 	$digest = Digest->new("SHA-256") unless defined $digest;
 	$digest->add($_[0]);
 	my $cksum = $digest->hexdigest;
