@@ -34,6 +34,7 @@ $VERSION     = 1.00;
 	create_seq_directory
 	datestring
 	dequote
+	get_checksum
 	is_whitespace
 	limit_recursion
 	path_too_long
@@ -47,6 +48,7 @@ $VERSION     = 1.00;
 #%EXPORT_TAGS = ( DEFAULT => [qw(&mysub2)] );
 
 # code dependencies
+use Digest;
 use File::Basename;
 use File::Path;
 use File::Spec;
@@ -95,6 +97,18 @@ sub dequote ($)
 		$ret =~ s/^"(.*)"$/$1/g;
 	}
 	return $ret;
+}
+
+# checksum object
+my $digest;
+
+sub get_checksum ($)
+{
+	$digest = Digest->new("SHA-256") unless defined $digest;
+	$digest->add($_[0]);
+	my $cksum = $digest->hexdigest;
+	debug "checksum $cksum";
+	return $cksum;
 }
 
 # check whether the given string consists entirely of vertical or horizontal whitespace

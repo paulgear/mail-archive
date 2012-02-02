@@ -48,7 +48,6 @@ $VERSION     = 1.00;
 
 # code dependencies
 use Date::Parse;
-use Digest;
 use Email::MIME;
 use Email::Reply;
 use Email::Simple;
@@ -119,25 +118,19 @@ sub collect_names (@)
 	return $max;
 }
 
-# checksum object
-my $digest;
-
 # return an array of hash pointers containing all message parts
 # checksum each part along the way
 sub collect_parts
 {
 	my ($msg, $level) = @_;
 	$level = 0 unless defined $level;
-	$digest = Digest->new("SHA-256") unless defined $digest;
 
 	limit_recursion($level);
 
 	my @parts;
 	for my $p ($msg->parts) {
 		# get checksum for the part
-		$digest->add($p->body);
-		my $cksum = $digest->hexdigest;
-		debug "checksum $cksum";
+		my $cksum = get_checksum($p->body);
 
 		# add the part to our array
 		push @parts, { part => $p, level => $level, checksum => $cksum };
