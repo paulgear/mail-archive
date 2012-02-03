@@ -21,11 +21,12 @@
 #
 
 # module setup
-use Test::More tests => 70;
+use Test::More tests => 170;
 use strict;
 use warnings;
 
 use_ok( 'MailArchive::Util' );
+use_ok( 'MailArchive::Config' );
 
 use File::Path;
 
@@ -131,6 +132,45 @@ ok( is_whitespace( "\t    \t\n\t    \t\n" ), "multi-line whitespace" );
 ok( ! is_whitespace( "Hello world\n" ), "hello world" );
 ok( ! is_whitespace( "helpme" ), "helpme" );
 ok( ! is_whitespace( "      \nHelp me!\n     \n" ), "multi-line including whitespace" );
+
+# return an error if we've passed the maximum recursion limit
+#sub limit_recursion ($)
+print "limit_recursion\n";
+
+# limit_recursion insists on a minimum value of 1 for both its limit and the tested value,
+# so if the passed value is < 1, we always expect limit recursion to succeed.
+sub adjust_limit_recursion ($)
+{
+	my $val = shift;
+	return $val <= 1 ? limit_recursion($val) : ! limit_recursion($val);
+}
+
+sub test_limit_recursion ($)
+{
+	my $limit = shift;
+	setconfig('recursion-level', $limit);
+	ok(limit_recursion(-1), "limit_recursion -1");
+	ok(limit_recursion(0), "limit_recursion 0");
+	ok(limit_recursion($limit / 2), "limit_recursion $limit / 2");
+	ok(limit_recursion($limit - 2), "limit_recursion $limit - 2");
+	ok(limit_recursion($limit - 1), "limit_recursion $limit - 1");
+	ok(limit_recursion($limit - 0), "limit_recursion $limit - 0");
+	ok(adjust_limit_recursion($limit + 1), "limit_recursion $limit + 1");
+	ok(adjust_limit_recursion($limit + 2), "limit_recursion $limit + 2");
+	ok(adjust_limit_recursion($limit + 10), "limit_recursion $limit + 10");
+	ok(adjust_limit_recursion($limit * 2), "limit_recursion $limit * 2");
+	ok(adjust_limit_recursion($limit * 10), "limit_recursion $limit * 10");
+}
+
+test_limit_recursion(-99);
+test_limit_recursion(-1);
+test_limit_recursion(0);
+test_limit_recursion(1);
+test_limit_recursion(2);
+test_limit_recursion(5);
+test_limit_recursion(99);
+test_limit_recursion(9999);
+test_limit_recursion(999999);
 
 # if the path is too long to be a valid Windows path, return the length, otherwise return 0
 print "path_too_long\n";

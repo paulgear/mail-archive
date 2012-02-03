@@ -39,9 +39,6 @@ use_ok( 'MailArchive::Archive' );
 #sub save_part ($$$)
 #	my ($dir, $file, $body) = @_;
 
-# exit with error if we've passed the maximum recursion limit
-#sub limit_recursion ($)
-
 #sub process_part ($$$$$$$$$)
 #	my ($basedir, $projnum, $dir, $part, $level, $prefix, $partnum, $subject, $smart_drop) = @_;
 
