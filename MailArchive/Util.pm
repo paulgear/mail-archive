@@ -80,11 +80,7 @@ sub check_seq_directory
 sub create_seq_directory
 {
 	my $dir = check_seq_directory(@_);
-	if (defined $dir) {
-		mkpath $dir
-			or error "Cannot create directory $dir: $!";
-		debug "made $dir";
-	}
+	mkpath $dir if defined $dir;
 	return $dir;
 }
 
@@ -119,14 +115,18 @@ sub is_whitespace ($)
 	return $_[0] =~ /^([[:space:]]|\R)*$/s;
 }
 
-# exit with error if we've passed the maximum recursion limit
+# return false if we've passed the maximum recursion limit
 sub limit_recursion ($)
 {
 	my $level = shift;
+	$level = 1 if $level < 1;
 	my $max = getconfig('recursion-level');
+	$max = 1 if $max < 1;
 	if ($level > $max) {
 		error "Reached maximum recursion level ($max) in message";
+		return 0;
 	}
+	return 1;
 }
 
 # if the path is too long to be a valid Windows path, return the length, otherwise return 0
@@ -169,11 +169,15 @@ sub read_stdin ()
 sub save_file ($$)
 {
 	my ($fname, $content) = @_;
-	open(my $fh, ">$fname")
-		or error "Cannot create file $fname: $!";
+	my $fh;
+	unless (open($fh, ">$fname")) {
+		error "Cannot create file $fname: $!";
+		return 0;
+	}
 	print $fh $content;
 	close $fh
 		or error "Cannot close $fname: $!";
+	return 1;
 }
 
 # ensure directory is a canonical path and it exists, returning the untainted name
@@ -181,10 +185,16 @@ sub validate_directory ($)
 {
 	my $dir = shift;
 	$dir = File::Spec->canonpath($dir);
-	error "Base directory $dir not found" unless -d $dir;
+	unless (-d $dir) {
+		error "Base directory $dir not found";
+		return undef;
+	}
 	$dir =~ /^(.*)$/;
 	$dir = $1;
-	error "Base directory $dir tainted" if tainted($dir);
+	if (tainted($dir)) {
+		error "Base directory $dir tainted";
+		return undef;
+	}
 	return $dir;
 }
 

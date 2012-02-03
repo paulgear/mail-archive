@@ -125,9 +125,9 @@ sub collect_parts
 	my ($msg, $level) = @_;
 	$level = 0 unless defined $level;
 
-	limit_recursion($level);
-
 	my @parts;
+	limit_recursion($level) or return @parts;
+
 	for my $p ($msg->parts) {
 		# get checksum for the part
 		my $cksum = get_checksum($p->body);

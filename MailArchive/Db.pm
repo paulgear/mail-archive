@@ -54,8 +54,8 @@ my $delete;
 my $message_select;
 my $message_insert;
 my $message_delete;
-my $lock_statement;
-my $unlock_statement;
+my $lock;
+my $unlock;
 
 sub dberror ($)
 {
@@ -73,8 +73,7 @@ sub add_file ($$)
 
 	my ($file, $checksum) = @_;
 	$insert->execute($file, $checksum)
-		or error "Cannot execute insert statement: " . $dbh->errstr;
-	$insert->finish();
+		or dberror "executing insert file";
 }
 
 sub check_file ($$)
@@ -82,14 +81,16 @@ sub check_file ($$)
 	init() unless defined $select;
 
 	my ($file, $checksum) = @_;
-	$select->execute($checksum)
-		or error "Cannot execute select statement: " . $dbh->errstr;
 	my @results;
-	while (my $ref = $select->fetchrow_hashref()) {
-		#print "Found a row: filename = $ref->{'filename'}, checksum = $ref->{'checksum'}\n";
-		push @results, $ref->{'filename'};
+	if ($select->execute($checksum)) {
+		while (my $ref = $select->fetchrow_hashref()) {
+			#print "Found a row: filename = $ref->{'filename'}, checksum = $ref->{'checksum'}\n";
+			push @results, $ref->{'filename'};
+		}
 	}
-	$select->finish();
+	else {
+		dberror "executing select file";
+	}
 	return @results;
 }
 
@@ -99,14 +100,15 @@ sub check_file ($$)
 # - check if message id exists in messages table
 # - if not, add it
 # - unlock messages table
-# Use of RaiseError is just to make the database code less ugly. Without the exception handling
-# it would require error handling at each step.
+# This prevents two parallel instances of mail-archive accessing the messages table, which is
+# important if two identical message arrive in quick succession (often due multiple recipients
+# on the same message being archived).
 sub check_message ($$$)
 {
 	init() unless defined $message_select;
 	my ($id, $checksum, $project) = @_;
 	my $ret;
-	if ($lock_statement->execute()) {
+	if ($lock->execute()) {
 		debug "Searching for $id, $checksum";
 		if ($message_select->execute($id)) {
 			while (my @row = $message_select->fetchrow_array()) {
@@ -114,20 +116,20 @@ sub check_message ($$$)
 				debug "Got result: @row";
 				last;
 			}
-			$message_select->finish() or dbwarning("closing message select");
 			unless (defined $ret) {
 				debug "Inserting $id, $checksum, $project";
 				$message_insert->execute($id, $checksum, $project)
-					or dbwarning("executing message insert");
+					or dbwarning "executing message insert";
 			}
 		}
 		else {
-			dbwarning("executing message select");
+			dbwarning "executing message select";
 		}
-		$unlock_statement->execute() or dbwarning("unlocking tables");
+		$unlock->execute()
+			or dbwarning "executing unlock tables";
 	}
 	else {
-		dbwarning("locking tables");
+		dbwarning "executing lock tables";
 	}
 	return $ret;
 }
@@ -138,8 +140,7 @@ sub remove_file ($)
 
 	my $file = shift;
 	$delete->execute($file)
-		or error "Cannot execute delete statement: " . $dbh->errstr;
-	$delete->finish();
+		or dbwarning "executing fileinfo delete - please delete $file entry manually";
 }
 
 # Remove a previously-added message id record.  Used for smart-drop messages which are discarded.
@@ -147,14 +148,14 @@ sub remove_message ($$$)
 {
 	init() unless defined $message_select;
 	my ($id, $checksum, $project) = @_;
-	if ($lock_statement->execute()) {
+	if ($lock->execute()) {
 		$message_delete->execute($id, $checksum, $project)
-			or dbwarning("executing message delete - please delete ($id, $checksum, $project) manually");
-		$unlock_statement->execute()
-			or dbwarning("unlocking tables");
+			or dbwarning "executing message delete - please delete ($id, $checksum, $project) manually";
+		$unlock->execute()
+			or dbwarning "executing unlock tables";
 	}
 	else {
-		dbwarning("locking tables - please delete ($id, $checksum, $project) manually");
+		dbwarning "executing lock tables - please delete ($id, $checksum, $project) manually";
 	}
 }
 
@@ -165,7 +166,7 @@ sub open_db ()
 	my $password	= getconfig('dbpass');
 	debug "Opening database connection";
 	$dbh = DBI->connect($dbconnect, $username, $password)
-		or error "Cannot open connection $dbconnect: " . $DBI::errstr;
+		or fatal "Cannot open connection $dbconnect: " . $DBI::errstr;
 }
 
 sub create_tables ()
@@ -211,33 +212,33 @@ sub create_statements ()
 		where checksum = ?
 		order by time
 	")
-		or error "Cannot create select statement: " . $dbh->errstr;
+		or dberror "creating file select";
 	$insert = $dbh->prepare("
 		insert into fileinfo (filename, checksum) values (?, ?)
 	")
-		or error "Cannot create insert statement: " . $dbh->errstr;
+		or dberror "creating file insert";
 	$delete = $dbh->prepare("
 		delete from fileinfo where filename = ?
 	")
-		or error "Cannot create delete statement: " . $dbh->errstr;
+		or dberror "creating file delete";
 	$message_select = $dbh->prepare("
 		select id, checksum, project, time
 		from messages
 		where id = ?
 	")
-		or error "Cannot create message select statement: " . $dbh->errstr;
+		or dberror "creating message select";
 	$message_delete = $dbh->prepare("
 		delete from messages where id = ? and checksum = ? and project = ?
 	")
-		or error "Cannot create message delete statement: " . $dbh->errstr;
+		or dberror "creating message delete";
 	$message_insert = $dbh->prepare("
 		insert into messages (id, checksum, project) values (?, ?, ?)
 	")
-		or error "Cannot create message insert statement: " . $dbh->errstr;
-	$lock_statement = $dbh->prepare("lock tables messages write, fileinfo write")
-		or error "Cannot create lock tables statement: " . $dbh->errstr;
-	$unlock_statement = $dbh->prepare("unlock tables")
-		or error "Cannot create unlock tables statement: " . $dbh->errstr;
+		or dberror "creating message insert";
+	$lock = $dbh->prepare("lock tables messages write")
+		or dberror "creating lock tablesstatement";
+	$unlock = $dbh->prepare("unlock tables")
+		or dberror "creating unlock tables statement";
 }
 
 sub init ()

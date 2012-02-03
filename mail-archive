@@ -62,9 +62,12 @@ my $projnum = shift @ARGV;
 
 # check and untaint base directory
 $basedir = validate_directory($basedir);
+exit 0 unless defined $basedir;		# validate_directory problems are sent to the admin
 
 # read our input email
 my $email = read_stdin();
 
 process_email($basedir, $projnum, $email, 0, undef);
 
+# We handle error conditions internally by emails or log messages, so always return OK to the mailer.
+exit 0;

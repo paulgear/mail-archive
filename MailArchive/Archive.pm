@@ -76,18 +76,18 @@ sub dedup_file ($$)
 		# move the file aside
 		unless (rename($fullpath, "$fullpath.tmp")) {
 			# Hasn't worked, we'll just put up with no dedup
-			warn "Cannot move aside $fullpath ($!)";
+			warning "Cannot move aside $fullpath ($!)";
 		}
 		# hard link it to the matching file
 		elsif (link($check_file, $fullpath)) {
 			debug "Linked $fullpath to $check_file";
-			warn "Cannot delete $fullpath.tmp ($!) - please delete manually"
+			warning "Cannot delete $fullpath.tmp ($!) - please delete manually"
 				unless unlink("$fullpath.tmp") == 1;
 		}
 		else {
 			# Hasn't worked, we'll just put up with no dedup
-			warn "Cannot link $fullpath to $check_file ($!)";
-			warn "Cannot move $fullpath.tmp to $fullpath ($!) - please rename manually"
+			warning "Cannot link $fullpath to $check_file ($!)";
+			warning "Cannot move $fullpath.tmp to $fullpath ($!) - please rename manually"
 				unless rename("$fullpath.tmp", $fullpath);
 		}
 
@@ -111,11 +111,12 @@ sub save_dedup_file ($$$$)
 
 	my $fullpath = File::Spec->catfile($dir, $file);
 	if (-e $fullpath) {
-		warn "File $fullpath already exists - skipping";
+		error "File $fullpath already exists - skipping";
 		return;
 	}
-	save_file($fullpath, $content);
-	dedup_file($fullpath, $cksum);
+	if (save_file($fullpath, $content)) {
+		dedup_file($fullpath, $cksum);
+	}
 }
 
 # main email processor
@@ -124,7 +125,7 @@ sub process_email ($$$$$)
 {
 	my ($basedir, $projnum, $body, $level, $subject_override) = @_;
 
-	limit_recursion($level);
+	limit_recursion($level) or return 0;
 
 	# open parsed version of the email
 	my $msg = Email::MIME->new($body);
@@ -172,13 +173,14 @@ sub process_email ($$$$$)
 	unless (defined $projnum) {
 		if ($outgoing) {
 			send_error($msg, "Project number not found in message", \@toaddr);
+			return 0;
 		}
 		else {
 			# Drop the message so that recipients aren't spammed for messages
 			# outside their control.  Incoming messages may be flagged separately
 			# via a procmail or mailfilter rule.
 			debug "Dropping incoming message with no project number";
-			exit 0;
+			return 1;
 		}
 	}
 
@@ -196,10 +198,14 @@ sub process_email ($$$$$)
 
 	# search for project directory
 	my $projdir = get_project_dir($basedir, $projnum);
-	send_error($msg, "Project directory for $projnum not found", \@toaddr)
-		unless (defined $projdir);
-	error("Project directory $projdir tainted")
-		if tainted($projdir);
+	unless (defined $projdir) {
+		send_error($msg, "Project directory for $projnum not found", \@toaddr);
+		return 0;
+	}
+	if (tainted($projdir)) {
+		error "Project directory $projdir tainted";
+		return 0;
+	}
 	debug "Project directory is $projdir";
 
 	# get the incoming/outgoing correspondence directory
@@ -208,6 +214,10 @@ sub process_email ($$$$$)
 
 	# parse the message, gather attachment names, determine maximum length
 	my @parts = collect_parts($msg);
+	if ($#parts < 0) {
+		error "No usable message parts found";
+		return 0;
+	}
 	debug "Found " . @parts . " usable parts in message";
 	my $max = collect_names(@parts);
 	debug "Maximum attachment name length is " . $max;
@@ -223,7 +233,7 @@ sub process_email ($$$$$)
 	if (defined $row) {
 		if ($row->[1] eq $checksum) {
 			debug "Dropping previously-seen message: $row->[0] $row->[2] $row->[3]";
-			exit 0;
+			return 1;
 		}
 		else {
 			warning "Checksum mismatch on previously-seen message: $row->[0] $row->[2] $row->[3]";
@@ -238,6 +248,7 @@ sub process_email ($$$$$)
 	my $len = path_too_long($emaildir, $max + 11);
 	if ($len) {
 		error "Path to email directory ($emaildir) too long";
+		return 0;
 	}
 
 	# use the other party as an identifier
@@ -270,6 +281,10 @@ sub process_email ($$$$$)
 	my $uniquebase = File::Spec->catfile($emaildir, $uniquefile);
 	debug "uniquebase = ($uniquebase)";
 	my $uniquedir = create_seq_directory($uniquebase, $max + 2);
+	unless (defined $uniquedir) {
+		error "Unable to create unique directory from $uniquebase, limit = $max + 2";
+		return 0;
+	}
 	debug "uniquedir = ($uniquedir)";
 
 	# remove duplicate parts
@@ -314,7 +329,7 @@ sub process_email ($$$$$)
 		debug "Saving whole email ($tmpsubj), checksum " . $checksum;
 		save_dedup_file($uniquedir, $tmpsubj, $body, $checksum);
 	}
-
+	return 1;
 }
 
 1;	# file must return true - do not remove this line

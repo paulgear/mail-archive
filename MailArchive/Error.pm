@@ -85,7 +85,7 @@ sub send_error_email ($$)
 
 	untaint_path();
 	sendmail($msg);
-	exit 0;
+	#exit 0;
 }
 
 # send a fatal error to the administrator

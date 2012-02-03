@@ -33,6 +33,7 @@ $VERSION     = 1.00;
 
 	debug
 	error
+	fatal
 	getdebug
 	setdebug
 	warning
@@ -85,6 +86,12 @@ sub warning ($)
 }
 
 sub error ($)
+{
+	syslog LOG_ERR, "%s", $_[0];
+	send_admin_error($_[0]);
+}
+
+sub fatal ($)
 {
 	syslog LOG_CRIT, "%s", $_[0];
 	send_admin_error($_[0]);

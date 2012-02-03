@@ -43,7 +43,10 @@ sub check_project_num (@)
 		}
 	}
 	debug "Project number is " . (defined $ret ? $ret : "UNDEFINED");
-	error "Project number $ret tainted" if defined $ret and tainted($ret);
+	if (defined $ret and tainted($ret)) {
+		error "Project number $ret tainted";
+		$ret = undef;
+	}
 	return $ret;
 }
 
