@@ -1,29 +1,19 @@
-Things still to be done, ideas for improvement:
+Ideas for improvement:
 
-- Optional feature to link all correspondence into a single directory with no
-  duplication of files if an identical copy is already there.
+- Improve test suite coverage.  This may require the redesign of some
+  classes to allow dummy implementations to be provided.
+
+- If we see a reply to a message which is associated with a project and the
+  project number is not specified, use that message's project as the project
+  number of the reply.
 
 - Add a database tidying routine to run, say, once per month, which will go
   through the database and delete entries for files which no longer exist.
 
-- Add a database pre-seeding routing to traverse a filesystem, checksum all of
-  the files, and add them to the database (including SpamAssassin training, if
-  necessary).  It would need to use the file's timestamp as the add to
-  database time - that way older files would be treated as older (not that
-  this is really important).
-
-- Need to think about how spam will be handled.  Ordinarily it will be handled
-  as an incoming email without a file number, so will be bounced to the admin,
-  which will result in spam doubling for the admin.  Perhaps we need to use
-  the existing correspondence corpus to train a SpamAssassin bayes database in
-  our base directory and discard those emails determined to be spam.  It
-  shouldn't be hard to integrate the SpamAssassin libraries to do so.
-
-- Create a complete test suite.
-
-- Track which message ids are used for which projects.  If we see a reply to a
-  message which is associated with a project and the project number is not
-  specified, use that message's project as the project number of the reply.
+- Add a database pre-seeding routing to traverse a filesystem, checksum all
+  of the files, and add them to the database.  It should use the file's
+  timestamp as the database timestamp - that way older files would be
+  treated as older (not that this is really important).
 
 - Save statistics for emails:
 	senders (domain & user)
@@ -33,4 +23,17 @@ Things still to be done, ideas for improvement:
 	date
 
 - Integrate with Lucene or similar for indexing email intelligently.
+
+- Need to think about how spam with faked internal sender addresses will be
+  handled.  Incoming email without a file number will ordinarily be dropped,
+  and it is expected the mail relay Bcc-ing the messages to mail-archive
+  will have adequate spam filtering, but for those messages which are
+  considered outgoing yet are spam, we may need to take additional steps.
+  One possibility is to use the existing correspondence corpus to train a
+  SpamAssassin bayes database and discard those emails determined to be
+  spam.  Integrating the SpamAssassin libraries to do this should be
+  straightforward.
+
+- Optional feature to link all correspondence for a project into a single
+  directory with no saving of files if an identical copy is already there.
 

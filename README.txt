@@ -16,6 +16,11 @@ Notes on the overall design goals:
   a match is found, and hard-linking the files in the filesystem if they are
   found to be identical.
 
+- Designed to be used as a Bcc destination for all users of a given domain,
+  which means that sometimes multiple users will receive an identical message.
+  Mail-archive tracks message ids, and if the checksum of the body matches,
+  all copies except the first are dropped.
+
 - Work to specification for the client who commissioned it, but be flexible
   enough to adapt to other filing systems.
 
@@ -63,13 +68,15 @@ Installation
 	cpan Email::Reply
 
 - Install the files here in the home directory of a non-privileged user with
-  permissions to write to your project directory.
-
-- Edit .mailfilter and config.pl to suit your site.
+  permissions to write to your project directory.  The easiest way to do this
+  is to clone the git repository:
+	# e.g. as "archive" user
+	cd $HOME
+	git clone http://github.com/paulgear/mail-archive .
 
 - Create a database and allow the user to use it:
 	mysql -p -u root
-	(Enter root password for mysql)
+	#(Enter root password for mysql)
 	create database mailarchive;
 	grant all privileges on database.* to 'user'@'host'
 		identified by 'password';
@@ -78,5 +85,10 @@ Installation
   'localhost', but this is not mandatory - the database may be placed on any
   appropriate database host.  Mail-archive's database use is limited and it is
   unlikely to have high performance requirement unless you are feeding it with
-  extremely high mail volumes or rates.
+  extremely high mail volumes or rates, in which case you've probably
+  already got a high-performance, dedicated database server.
+
+- Edit .mailfilter and config.pl to suit your site. Committing them to your
+  local git repository is recommended:
+	git commit -m'Customise for local site' .mailfilter config.pl
 
