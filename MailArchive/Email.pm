@@ -71,7 +71,7 @@ sub clean_subject ($$)
 	$subject =~ s/\s+/ /g;				# compress whitespace
 	$subject =~ s/^\s+//g;				# delete leading whitespace
 	$subject =~ s/\s+$//g;				# delete trailing whitespace
-	$subject = "NO SUBJECT" if $subject =~ /^$/;	# add a subject if none exists
+	#$subject = "NO SUBJECT" if $subject =~ /^$/;	# add a subject if none exists
 	debug "subject (post-clean) = $subject";
 	return $subject;
 }
