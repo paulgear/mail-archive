@@ -34,6 +34,7 @@ $VERSION     = 1.00;
 	add_file
 	check_file
 	check_message
+	remove_message
 	remove_file
 
 );
@@ -52,6 +53,7 @@ my $insert;
 my $delete;
 my $message_select;
 my $message_insert;
+my $message_delete;
 my $lock_statement;
 my $unlock_statement;
 
@@ -102,13 +104,10 @@ sub check_file ($$)
 sub check_message ($$$)
 {
 	init() unless defined $message_select;
-
 	my ($id, $checksum, $project) = @_;
 	my $ret;
-
-	debug "Locking tables";
 	if ($lock_statement->execute()) {
-		debug "select $id";
+		debug "Searching for $id, $checksum";
 		if ($message_select->execute($id)) {
 			while (my @row = $message_select->fetchrow_array()) {
 				$ret = \@row;
@@ -125,13 +124,11 @@ sub check_message ($$$)
 		else {
 			dbwarning("executing message select");
 		}
-		debug "Unlocking tables";
 		$unlock_statement->execute() or dbwarning("unlocking tables");
 	}
 	else {
 		dbwarning("locking tables");
 	}
-
 	return $ret;
 }
 
@@ -143,6 +140,22 @@ sub remove_file ($)
 	$delete->execute($file)
 		or error "Cannot execute delete statement: " . $dbh->errstr;
 	$delete->finish();
+}
+
+# Remove a previously-added message id record.  Used for smart-drop messages which are discarded.
+sub remove_message ($$$)
+{
+	init() unless defined $message_select;
+	my ($id, $checksum, $project) = @_;
+	if ($lock_statement->execute()) {
+		$message_delete->execute($id, $checksum, $project)
+			or dbwarning("executing message delete - please delete ($id, $checksum, $project) manually");
+		$unlock_statement->execute()
+			or dbwarning("unlocking tables");
+	}
+	else {
+		dbwarning("locking tables - please delete ($id, $checksum, $project) manually");
+	}
 }
 
 sub open_db ()
@@ -192,7 +205,6 @@ sub create_tables ()
 
 sub create_statements ()
 {
-	debug "Creating select statement";
 	$select = $dbh->prepare("
 		select filename, checksum
 		from fileinfo
@@ -200,24 +212,24 @@ sub create_statements ()
 		order by time
 	")
 		or error "Cannot create select statement: " . $dbh->errstr;
-	debug "Creating insert statement";
 	$insert = $dbh->prepare("
 		insert into fileinfo (filename, checksum) values (?, ?)
 	")
 		or error "Cannot create insert statement: " . $dbh->errstr;
-	debug "Creating delete statement";
 	$delete = $dbh->prepare("
 		delete from fileinfo where filename = ?
 	")
 		or error "Cannot create delete statement: " . $dbh->errstr;
-	debug "Creating message select statement";
 	$message_select = $dbh->prepare("
 		select id, checksum, project, time
 		from messages
 		where id = ?
 	")
 		or error "Cannot create message select statement: " . $dbh->errstr;
-	debug "Creating message insert statement";
+	$message_delete = $dbh->prepare("
+		delete from messages where id = ? and checksum = ? and project = ?
+	")
+		or error "Cannot create message delete statement: " . $dbh->errstr;
 	$message_insert = $dbh->prepare("
 		insert into messages (id, checksum, project) values (?, ?, ?)
 	")

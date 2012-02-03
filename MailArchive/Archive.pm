@@ -221,8 +221,15 @@ sub process_email ($$$$$)
 	debug "Checking for existing message id";
 	my $row = check_message($messageid, $checksum, $projnum);
 	if (defined $row) {
-		debug "Dropping previously seen message: $row->[0] $row->[2] $row->[3]";
-		exit 0;
+		if ($row->[1] eq $checksum) {
+			debug "Dropping previously-seen message: $row->[0] $row->[2] $row->[3]";
+			exit 0;
+		}
+		else {
+			warning "Checksum mismatch on previously-seen message: $row->[0] $row->[2] $row->[3]";
+			debug "... checksum was $row->[1] should be $checksum";
+			debug "... This should never happen.  Continuing to process email.";
+		}
 	}
 
 	# Check the length of the path - if it's too long, we can't shorten it so there's
@@ -291,6 +298,7 @@ sub process_email ($$$$$)
 		# clean up unneeded directory
 		debug "Removing directory $uniquedir";
 		debug "$uniquedir not removed: $!" unless rmdir $uniquedir;
+		remove_message($messageid, $checksum, $projnum);
 	}
 	else {
 		# save the parts (if split turned on)
