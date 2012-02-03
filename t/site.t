@@ -21,7 +21,7 @@
 #
 
 # module setup
-use Test::More;
+use Test::More tests => 451;
 use strict;
 use warnings;
 
@@ -178,5 +178,3 @@ check_project_num_invalid(1);
 
 # TODO get the email directory for this project
 #sub get_project_email_dir ($$)
-
-done_testing();
