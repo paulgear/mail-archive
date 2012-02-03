@@ -212,4 +212,4 @@ $dir = "/var/../tmp";			is( validate_directory($dir), $dir, "Complex: $dir");
 $dir = "/var/tmp/../";			is( validate_directory($dir), "/var/tmp/..", "Complex with trailing slash: $dir");
 $dir = "/./.././.././//././dev";	is( validate_directory($dir), "/dev", "Leading complex mess: $dir");
 $dir = $ENV{'HOME'};			is( validate_directory($dir), $ENV{'HOME'}, "Home directory: $dir");
-
+# FIXME: implement tests of invalid directories
