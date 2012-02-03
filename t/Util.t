@@ -133,7 +133,7 @@ ok( ! is_whitespace( "Hello world\n" ), "hello world" );
 ok( ! is_whitespace( "helpme" ), "helpme" );
 ok( ! is_whitespace( "      \nHelp me!\n     \n" ), "multi-line including whitespace" );
 
-# return an error if we've passed the maximum recursion limit
+# return false if we've passed the maximum recursion limit
 #sub limit_recursion ($)
 print "limit_recursion\n";
 
