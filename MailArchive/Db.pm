@@ -110,13 +110,11 @@ sub check_message ($$$)
 	if ($lock_statement->execute()) {
 		debug "select $id";
 		if ($message_select->execute($id)) {
-			debug "results";
 			while (my @row = $message_select->fetchrow_array()) {
 				$ret = \@row;
-				debug "Got result: $ret";
+				debug "Got result: @row";
 				last;
 			}
-			debug "finish";
 			$message_select->finish() or dbwarning("closing message select");
 			unless (defined $ret) {
 				debug "Inserting $id, $checksum, $project";
