@@ -148,6 +148,8 @@ sub process_email ($$$$$)
 	$messageid =~ s/^\s*<\s*//;
 	$messageid =~ s/\s*>\s*$//;
 
+	debug "========== processing $messageid ==========";
+
 	# Show subject
 	debug "origsubject = $origsubject";
 
@@ -184,16 +186,24 @@ sub process_email ($$$$$)
 		}
 	}
 
-	# remove noise from subject
-	$subject = clean_subject($subject, $projnum);
-	debug "subject = $subject";
+	# save a cleaned copy of the subject now that the project number is known
+	my $cleansubject = clean_subject($origsubject, $projnum);
 
 	# put in a subject override if necessary
 	if (getconfig('subject-override') && defined $subject_override) {
-		unless ($subject_override =~ /^\s*$/) {
-			$subject = $subject_override;
-			debug "subject overridden with $subject";
-		}
+		$subject = $subject_override;
+		debug "subject overridden with $subject";
+	}
+
+	# remove noise from subject
+	$subject = clean_subject($subject, $projnum);
+	debug "subject (cleaned) = $subject";
+
+	# If, after the subject override is applied and the subject is cleaned up,
+	# we have an (almost) empty subject, restore the original subject.
+	if ($subject =~ /^\s*$/) {
+		$subject = $cleansubject;
+		debug "replaced empty subject with $subject";
 	}
 
 	# search for project directory
@@ -237,8 +247,8 @@ sub process_email ($$$$$)
 		}
 		else {
 			warning "Checksum mismatch on previously-seen message: $row->[0] $row->[2] $row->[3]";
-			debug "... checksum was $row->[1] should be $checksum";
-			debug "... This should never happen.  Continuing to process email.";
+			debug "    Checksum was $row->[1] should be $checksum";
+			debug "    Continuing to process email.";
 		}
 	}
 
@@ -326,7 +336,6 @@ sub process_email ($$$$$)
 			}
 		}
 		# save the whole file
-		my $cleansubject = clean_subject($origsubject, $projnum);
 		my $tmpsubj = length("$cleansubject.eml") > $max ? "email.eml" : "$cleansubject.eml";
 		debug "Saving whole email ($tmpsubj), checksum " . $checksum;
 		save_dedup_file($uniquedir, $tmpsubj, $body, $checksum);

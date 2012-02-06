@@ -63,7 +63,7 @@ sub parse_date ($);
 sub clean_subject ($$)
 {
 	my ($subject, $projnum) = @_;
-	debug "subject (pre-clean) = $subject";
+	#debug "subject (pre-clean) = $subject";
 	$subject =~ s/((Emailing|FW|Fwd|Re|RE): ?)*//g;	# delete MUA noise
 	$subject =~ s/($projnum\s*)*//g;		# delete references to the project number
 	$subject =~ s/[\\<>*|?:]+//g;			# delete samba reserved characters
@@ -72,7 +72,7 @@ sub clean_subject ($$)
 	$subject =~ s/^\s+//g;				# delete leading whitespace
 	$subject =~ s/\s+$//g;				# delete trailing whitespace
 	#$subject = "NO SUBJECT" if $subject =~ /^$/;	# add a subject if none exists
-	debug "subject (post-clean) = $subject";
+	#debug "subject (post-clean) = $subject";
 	return $subject;
 }
 
