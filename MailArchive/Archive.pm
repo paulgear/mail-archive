@@ -169,7 +169,7 @@ sub process_email ($$$$$)
 	push @toaddr, @ccaddr;
 
 	# validate project number
-	$projnum = check_project_num($projnum, $subject_override, $subject);
+	$projnum = check_project_num($subject_override, $projnum, $subject);
 	unless (defined $projnum) {
 		if ($outgoing) {
 			send_error($msg, "Project number not found in message", \@toaddr);
