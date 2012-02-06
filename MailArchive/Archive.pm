@@ -149,7 +149,7 @@ sub process_email ($$$$$)
 	$messageid =~ s/\s*>\s*$//;
 
 	# Show subject
-	debug "subject = $subject";
+	debug "origsubject = $origsubject";
 
 	# work out whether the message is incoming or outgoing
 	my @fromaddr = Email::Address->parse($from);
@@ -169,7 +169,7 @@ sub process_email ($$$$$)
 	push @toaddr, @ccaddr;
 
 	# validate project number
-	$projnum = check_project_num($subject_override, $projnum, $subject);
+	$projnum = check_project_num($subject_override, $projnum, $origsubject);
 	unless (defined $projnum) {
 		if ($outgoing) {
 			send_error($msg, "Project number not found in message", \@toaddr);
@@ -186,7 +186,7 @@ sub process_email ($$$$$)
 
 	# remove noise from subject
 	$subject = clean_subject($subject, $projnum);
-	$origsubject = clean_subject($origsubject, $projnum);
+	debug "subject = $subject";
 
 	# put in a subject override if necessary
 	if (getconfig('subject-override') && defined $subject_override) {
@@ -307,7 +307,8 @@ sub process_email ($$$$$)
 		@parts = grep { $_->{'level'} == 0 } @parts;
 		debug "Found " . ($#parts + 1) . " parts at level 0";
 		for my $p (@parts) {
-			process_email($basedir, $projnum, $p->{'part'}->body_raw, $level + 1, $subject);
+			process_email($basedir, $projnum, $p->{'part'}->body_raw, $level + 1,
+				defined $subject_override ? $subject_override : $origsubject);
 		}
 
 		# clean up unneeded directory
@@ -325,7 +326,8 @@ sub process_email ($$$$$)
 			}
 		}
 		# save the whole file
-		my $tmpsubj = length("$origsubject.eml") > $max ? "email.eml" : "$origsubject.eml";
+		my $cleansubject = clean_subject($origsubject, $projnum);
+		my $tmpsubj = length("$cleansubject.eml") > $max ? "email.eml" : "$cleansubject.eml";
 		debug "Saving whole email ($tmpsubj), checksum " . $checksum;
 		save_dedup_file($uniquedir, $tmpsubj, $body, $checksum);
 	}
