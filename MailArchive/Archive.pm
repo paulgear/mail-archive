@@ -172,7 +172,7 @@ sub process_email ($$$$$)
 	push @toaddr, @ccaddr;
 
 	# determine whether we're in smart-drop mode
-	debug "smart-drop is " . (getconfig('smart-drop') ? "" : "NOT") . " configured";
+	debug "smart-drop is " . (getconfig('smart-drop') ? "" : "NOT ") . "configured";
 	my $smartdrop = getconfig('smart-drop') && getconfig('split') && $outgoing && $toaddr[0]->address eq getconfig('archiver-email');
 	debug "smart-drop is " . ($smartdrop ? "ON" : "OFF") . " for this message";
 
