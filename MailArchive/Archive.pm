@@ -240,17 +240,19 @@ sub process_email ($$$$$)
 	debug "dropped " . ($count - $#parts) . " whitespace parts";
 
 	# check for duplicate message id
-	debug "Checking for existing message id";
-	my $row = check_message($messageid, $checksum, $projnum);
-	if (defined $row) {
-		if ($row->[1] eq $checksum) {
-			debug "Dropping previously-seen message: $row->[0] $row->[2] $row->[3]";
-			return 1;
-		}
-		else {
-			warning "Checksum mismatch on previously-seen message: $row->[0] $row->[2] $row->[3]";
-			debug "    Checksum was $row->[1] should be $checksum";
-			debug "    Continuing to process email.";
+	unless ($smartdrop) {
+		debug "Checking for existing message id";
+		my $row = check_message($messageid, $checksum, $projnum);
+		if (defined $row) {
+			if ($row->[1] eq $checksum) {
+				debug "Dropping previously-seen message: $row->[0] $row->[2] $row->[3]";
+				return 1;
+			}
+			else {
+				warning "Checksum mismatch on previously-seen message: $row->[0] $row->[2] $row->[3]";
+				debug "    Checksum was $row->[1] should be $checksum";
+				debug "    Continuing to process email.";
+			}
 		}
 	}
 
@@ -275,9 +277,6 @@ sub process_email ($$$$$)
 
 	if ($smartdrop) {
 		debug "Processing only attached emails";
-
-		# clean up unneeded database entry
-		remove_message($messageid, $checksum, $projnum);
 
 		# do not save the whole email or the attachments - only process attached emails
 		@parts = grep { $_->{'part'}->content_type =~ /^message\// } @parts;
