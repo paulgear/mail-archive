@@ -21,31 +21,93 @@
 #
 
 # module setup
-use Test::More tests => 1;
+use Test::More tests => 121;
 use strict;
 use warnings;
 
 use_ok( 'MailArchive::Email' );
 
-#	clean_subject
-#	concatenate_headers
+# TODO:
+#	checksum_parts
+#	collect_names
+#	collect_parts
+#	condense_parts
 #	dump_email_address
 #	dump_email_addresses
+#	dump_part
 #	get_local_received_date
 #	is_local
 #	send_error
 
 #sub clean_subject ($$)
-#	my ($subject, $projnum) = @_;
-#	debug "subject (pre-clean) = $subject";
-#	$subject =~ s/((Emailing|FW|Fwd|Re|RE): ?)*//g;	# delete MUA noise
-#	$subject =~ s/($projnum\s*)*//g;		# delete references to the project number
-#	$subject =~ s/[\\<>*|?:]+//g;			# delete samba reserved characters
-#	$subject =~ s/\// /g;				# replace / with space
-#	$subject =~ s/\s+/ /g;				# compress whitespace
-#	$subject =~ s/^\s+//g;				# delete leading whitespace
-#	$subject =~ s/\s+$//g;				# delete trailing whitespace
-#	$subject = "NO SUBJECT" if $subject =~ /^$/;	# add a subject if none exists
+print "Testing clean_subject\n";
+
+sub test_clean_subject ($)
+{
+	my $projnum = shift;
+	my $num = 'QB987654';
+
+	is(clean_subject(undef, $projnum), undef);
+	is(clean_subject("", $projnum), "");
+	is(clean_subject("    ", $projnum), "");
+	is(clean_subject("Hello world", $projnum), "Hello world");
+	is(clean_subject("\t  Hello world", $projnum), "Hello world");
+	is(clean_subject("Hello world\r\n", $projnum), "Hello world");
+	is(clean_subject("Hello world:Hello world\r\n", $projnum), "Hello worldHello world");
+	is(clean_subject("    Hello    \t world  \n", $projnum), "Hello world");
+
+	# some semi-real-world tests
+	is(clean_subject("[MY1234-Testing] Need a flurble coordinator/s for A-123 on Tuesday", $projnum),
+		"[MY1234-Testing] Need a flurble coordinator s for A-123 on Tuesday");
+	is(clean_subject("Status report (was Re: Join my network on LinkedIn)", $projnum),
+		"Status report (was Join my network on LinkedIn)");
+	is(clean_subject("Disallowed attachments in **Fwd: Re: http://youtube.com video issues**", $projnum),
+		"Disallowed attachments in http youtube.com video issues");
+	is(clean_subject("Fwd: Long lead-Time for Components - PLEASE READ - IMPORTANT!", $projnum),
+		"Long lead-Time for Components - PLEASE READ - IMPORTANT!");
+	is(clean_subject("RE: Setting up VLANs, LAG's and routing on our Cisco switches", $projnum),
+		"Setting up VLANs, LAG's and routing on our Cisco switches");
+
+	if (!defined $projnum || $projnum ne $num) {
+		is(clean_subject("  $num/Hello world", $projnum), "$num Hello world");
+		is(clean_subject(" Emailing: Hello world ($num)", $projnum), "Hello world ($num)");
+	}
+	else {
+		is(clean_subject("  $num/Hello world", $projnum), "Hello world");
+		is(clean_subject(" Emailing: Hello world ($num)", $projnum), "Hello world ()");
+	}
+
+	unless (defined $projnum) {
+		# We expect the same results as a non-whitespace projnum,
+		# but this avoids undef warnings from the test suite.
+		is(clean_subject("  /Hello world", $projnum), "Hello world");
+		is(clean_subject(" Emailing: Hello world ()", $projnum), "Hello world ()");
+		is(clean_subject(" Emailing: Hello world (  )", $projnum), "Hello world ( )");
+		is(clean_subject("Re:  Testing 123", $projnum), "Testing 123");
+		is(clean_subject("Re:  - yet another test", $projnum), "- yet another test");
+	}
+	elsif ($projnum =~ /^\s+$/) {
+		is(clean_subject("  $projnum/Hello world", $projnum), "Hello world");
+		is(clean_subject(" Emailing: Hello world ($projnum)", $projnum), "Hello world ( )");
+		is(clean_subject(" Emailing: Hello world (  $projnum)", $projnum), "Hello world ( )");
+		is(clean_subject("Re: $projnum Testing 123", $projnum), "Testing 123");
+		is(clean_subject("Re: $projnum - yet another test", $projnum), "- yet another test");
+	}
+	else {
+		is(clean_subject("  $projnum/Hello world", $projnum), "Hello world");
+		is(clean_subject(" Emailing: Hello world ($projnum)", $projnum), "Hello world ()");
+		is(clean_subject(" Emailing: Hello world (  $projnum)", $projnum), "Hello world ( )");
+		is(clean_subject("Re: $projnum Testing 123", $projnum), "Testing 123");
+		is(clean_subject("Re: $projnum - yet another test", $projnum), "- yet another test");
+	}
+}
+
+test_clean_subject(undef);
+test_clean_subject('');
+test_clean_subject('  ');
+test_clean_subject('QB1234');
+test_clean_subject('QB123456');
+test_clean_subject('FN1234567890');
 
 # concatenate headers in an array into a single string
 #sub concatenate_headers (@)
