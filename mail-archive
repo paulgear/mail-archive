@@ -70,4 +70,5 @@ my $email = read_stdin();
 process_email($basedir, $projnum, $email, 0, undef);
 
 # We handle error conditions internally by emails or log messages, so always return OK to the mailer.
+debug "Exiting normally";
 exit 0;
