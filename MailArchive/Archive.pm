@@ -209,7 +209,7 @@ sub process_email ($$$$$)
 
 	# If, after the subject override is applied and the subject is cleaned up,
 	# we have an (almost) empty subject, restore the original subject.
-	if ($subject =~ /^\s*$/) {
+	if ($subject =~ /^\s*$/ && $cleansubject !~ /^\s*$/) {
 		$subject = $cleansubject;
 		debug "replaced empty subject with $subject";
 	}
