@@ -30,6 +30,8 @@ use_ok( 'MailArchive::Config' );
 
 use File::Path;
 
+setconfig('mail-errors', 0);
+
 # Given a base and a maximum sequence number (default 99),
 # find the first unused directory name in the sequence.
 # Ensure the directory name used is sufficiently less than the overall

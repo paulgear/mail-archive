@@ -47,6 +47,7 @@ our %config = (
 	'dbuser'		=> 'mailarchive',
 	'error-subject'		=> 'Mail Archive Error',
 	'localdomains'		=> [ 'localhost' ],
+	'mail-errors'		=> 1,
 	'maxpath'		=> 255,
 	'projnum-regex'		=> '\b(FN\d{6})\b',
 	'projnum-split-regex'	=> '^FN(\d\d)(\d\d)(\d\d)$',

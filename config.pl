@@ -18,6 +18,11 @@ $config{'error-subject'}	= 'Mail Archive Error';
 # Mail from one of these domains is considered outgoing
 $config{'localdomains'}		= [ 'localhost' ];
 
+# Send errors via email to the administrator
+# This is mostly for the use of the test suite
+# Running with mail-errors == 1 is always recommended for production systems
+$config{'mail-errors'}		= 1;
+
 # Maximum length of a file path
 $config{'maxpath'}		= 255;
 
