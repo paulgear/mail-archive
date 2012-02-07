@@ -142,9 +142,10 @@ sub process_email ($$$$$)
 	my $from = $msg->header("From");
 	my $to = $msg->header("To");
 	my $cc = $msg->header("Cc");
-
-	# get message id, prune punctuation
 	my $messageid = $msg->header("Message-Id");
+	my @received = $msg->header("Received");
+
+	# prune punctuation from message id
 	$messageid =~ s/^\s*<\s*//;
 	$messageid =~ s/\s*>\s*$//;
 
@@ -170,12 +171,19 @@ sub process_email ($$$$$)
 	# recipients are the combination of To & Cc
 	push @toaddr, @ccaddr;
 
+	# determine whether we're in smart-drop mode
+	debug "smart-drop is " . (getconfig('smart-drop') ? "" : "NOT") . " configured";
+	my $smartdrop = getconfig('smart-drop') && getconfig('split') && $outgoing && $toaddr[0]->address eq getconfig('archiver-email');
+	debug "smart-drop is " . ($smartdrop ? "ON" : "OFF") . " for this message";
+
 	# validate project number
 	$projnum = check_project_num($subject_override, $projnum, $origsubject);
 	unless (defined $projnum) {
 		if ($outgoing) {
-			send_error($msg, "Project number not found in message", \@toaddr);
-			return 0;
+			unless ($smartdrop) {
+				send_error($msg, "Project number not found in message", \@toaddr);
+				return 0;
+			}
 		}
 		else {
 			# Drop the message so that recipients aren't spammed for messages
@@ -206,22 +214,6 @@ sub process_email ($$$$$)
 		debug "replaced empty subject with $subject";
 	}
 
-	# search for project directory
-	my $projdir = get_project_dir($basedir, $projnum);
-	unless (defined $projdir) {
-		send_error($msg, "Project directory for $projnum not found", \@toaddr);
-		return 0;
-	}
-	if (tainted($projdir)) {
-		error "Project directory $projdir tainted";
-		return 0;
-	}
-	debug "Project directory is $projdir";
-
-	# get the incoming/outgoing correspondence directory
-	my $emaildir = get_project_email_dir($projdir, $outgoing);
-	debug "emaildir = $emaildir";
-
 	# parse the message, gather attachment names, determine maximum length
 	my @parts = collect_parts($msg);
 	if ($#parts < 0) {
@@ -237,6 +229,16 @@ sub process_email ($$$$$)
 	my $checksum = $parts[0]->{'checksum'};
 	debug "Message checksum $checksum";
 
+	# remove duplicate parts
+	my $count = $#parts;
+	@parts = condense_parts(@parts);
+	debug "dropped " . ($count - $#parts) . " duplicate parts";
+
+	# remove whitespace parts
+	$count = $#parts;
+	@parts = grep { ! is_whitespace($_->{'part'}->body) } @parts;
+	debug "dropped " . ($count - $#parts) . " whitespace parts";
+
 	# check for duplicate message id
 	debug "Checking for existing message id";
 	my $row = check_message($messageid, $checksum, $projnum);
@@ -250,15 +252,6 @@ sub process_email ($$$$$)
 			debug "    Checksum was $row->[1] should be $checksum";
 			debug "    Continuing to process email.";
 		}
-	}
-
-	# Check the length of the path - if it's too long, we can't shorten it so there's
-	# nothing we can do but exit.  Leave enough room for the longest attachment name, 
-	# two path separators, and a minimal email directory name (yymmdd nn).
-	my $len = path_too_long($emaildir, $max + 11);
-	if ($len) {
-		error "Path to email directory ($emaildir) too long";
-		return 0;
 	}
 
 	# use the other party as an identifier
@@ -280,9 +273,57 @@ sub process_email ($$$$$)
 	my $otherparty = join ",", @otherparty;
 	debug "otherparty = $otherparty";
 
+	if ($smartdrop) {
+		debug "Processing only attached emails";
+
+		# clean up unneeded database entry
+		remove_message($messageid, $checksum, $projnum);
+
+		# do not save the whole email or the attachments - only process attached emails
+		@parts = grep { $_->{'part'}->content_type =~ /^message\// } @parts;
+		debug "Found " . ($#parts + 1) . " message parts";
+		@parts = grep { $_->{'level'} == 0 } @parts;
+		debug "Found " . ($#parts + 1) . " parts at level 0";
+
+		# re-process each top-level part as a separate email
+		for my $p (@parts) {
+			process_email($basedir, $projnum, $p->{'part'}->body_raw, $level + 1,
+				defined $subject_override ? $subject_override : $origsubject);
+		}
+		return 1;
+	}
+
+	#
+	# else (not in smart-drop mode)
+	#
+
 	# try to get the exact date of when we received the email
-	my @received = $msg->header("Received");
 	my $received = get_local_received_date(@received);
+
+	# search for project directory
+	my $projdir = get_project_dir($basedir, $projnum);
+	unless (defined $projdir) {
+		send_error($msg, "Project directory for $projnum not found", \@toaddr);
+		return 0;
+	}
+	if (tainted($projdir)) {
+		error "Project directory $projdir tainted";
+		return 0;
+	}
+	debug "Project directory is $projdir";
+
+	# get the incoming/outgoing correspondence directory
+	my $emaildir = get_project_email_dir($projdir, $outgoing);
+	debug "emaildir = $emaildir";
+
+	# Check the length of the path - if it's too long, we can't shorten it so there's
+	# nothing we can do but exit.  Leave enough room for the longest attachment name, 
+	# two path separators, and a minimal email directory name (yymmdd nn).
+	my $len = path_too_long($emaildir, $max + 11);
+	if ($len) {
+		error "Path to email directory ($emaildir) too long";
+		return 0;
+	}
 
 	# use the date, subject, and otherparty to create a unique directory name within the
 	# correspondence directory
@@ -297,49 +338,19 @@ sub process_email ($$$$$)
 	}
 	debug "uniquedir = ($uniquedir)";
 
-	# remove duplicate parts
-	my $count = $#parts;
-	@parts = condense_parts(@parts);
-	debug "dropped " . ($count - $#parts) . " duplicate parts";
-
-	# remove whitespace parts
-	$count = $#parts;
-	@parts = grep { ! is_whitespace($_->{'part'}->body) } @parts;
-	debug "dropped " . ($count - $#parts) . " whitespace parts";
-
-	debug "smart-drop is " . getconfig('smart-drop');
-	if (getconfig('smart-drop') && $outgoing && $toaddr[0]->address eq getconfig('archiver-email') && getconfig('split')) {
-		debug "Processing only attached emails";
-
-		# do not save the whole email or the attachments - only process attached emails
-		@parts = grep { $_->{'part'}->content_type =~ /^message\// } @parts;
-		debug "Found " . ($#parts + 1) . " message parts";
-		@parts = grep { $_->{'level'} == 0 } @parts;
-		debug "Found " . ($#parts + 1) . " parts at level 0";
+	# save the parts (if split turned on)
+	if (getconfig('split')) {
+		@parts = grep { defined $_->{'name'} } @parts;
 		for my $p (@parts) {
-			process_email($basedir, $projnum, $p->{'part'}->body_raw, $level + 1,
-				defined $subject_override ? $subject_override : $origsubject);
+			debug "Saving part " . $p->{'name'};
+			save_dedup_file($uniquedir, $p->{'name'}, $p->{'part'}->body, $p->{'checksum'});
 		}
+	}
+	# save the whole file
+	my $tmpsubj = length("$cleansubject.eml") > $max ? "email.eml" : "$cleansubject.eml";
+	debug "Saving whole email ($tmpsubj), checksum " . $checksum;
+	save_dedup_file($uniquedir, $tmpsubj, $body, $checksum);
 
-		# clean up unneeded directory
-		debug "Removing directory $uniquedir";
-		debug "$uniquedir not removed: $!" unless rmdir $uniquedir;
-		remove_message($messageid, $checksum, $projnum);
-	}
-	else {
-		# save the parts (if split turned on)
-		if (getconfig('split')) {
-			@parts = grep { defined $_->{'name'} } @parts;
-			for my $p (@parts) {
-				debug "Saving part " . $p->{'name'};
-				save_dedup_file($uniquedir, $p->{'name'}, $p->{'part'}->body, $p->{'checksum'});
-			}
-		}
-		# save the whole file
-		my $tmpsubj = length("$cleansubject.eml") > $max ? "email.eml" : "$cleansubject.eml";
-		debug "Saving whole email ($tmpsubj), checksum " . $checksum;
-		save_dedup_file($uniquedir, $tmpsubj, $body, $checksum);
-	}
 	return 1;
 }
 
